@@ -22,11 +22,15 @@ public class ToolExecutionLog extends BaseModel {
     @JoinColumn(name = "api_tool_id")
     private ApiTool apiTool;
 
+    @Column(length = 8000)
     private String sessionId;
+    @Column(length = 8000)
     private String requestPayload;
+    @Column(length = 8000)
     private String responsePayload;
     private Long executionTimeMs;
     private boolean success;
+    @Column(length = 8000)
     private String errorMessage;
     private Instant executedAt;
 }

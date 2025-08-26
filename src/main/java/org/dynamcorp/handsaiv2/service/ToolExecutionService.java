@@ -7,9 +7,7 @@ import org.dynamcorp.handsaiv2.dto.ToolExecuteRequest;
 import org.dynamcorp.handsaiv2.dto.ToolExecuteResponse;
 import org.dynamcorp.handsaiv2.exception.ResourceNotFoundException;
 import org.dynamcorp.handsaiv2.exception.ToolExecutionException;
-import org.dynamcorp.handsaiv2.model.ApiTool;
-import org.dynamcorp.handsaiv2.model.HttpMethodEnum;
-import org.dynamcorp.handsaiv2.model.ToolExecutionLog;
+import org.dynamcorp.handsaiv2.model.*;
 import org.dynamcorp.handsaiv2.repository.ToolExecutionLogRepository;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -121,21 +119,28 @@ public class ToolExecutionService {
     private Object executeApiCall(ApiTool apiTool, Map<String, Object> parameters) {
         WebClient client = webClientBuilder.baseUrl(apiTool.getBaseUrl()).build();
 
+        // Preparar parámetros incluyendo autenticación
+        Map<String, Object> finalParameters = prepareParametersWithAuth(apiTool, parameters);
+        String uriPath = buildUriWithQueryParams(apiTool, finalParameters);
+
         // Configurar el método HTTP y los parámetros según la definición de la herramienta
         WebClient.RequestBodySpec requestSpec;
         if (HttpMethodEnum.GET.equals(apiTool.getHttpMethod())) {
-            requestSpec = (WebClient.RequestBodySpec) client.get().uri(apiTool.getEndpointPath());
+            requestSpec = (WebClient.RequestBodySpec) client.get().uri(uriPath);
         } else if (HttpMethodEnum.POST.equals(apiTool.getHttpMethod())) {
-            requestSpec = client.post().uri(apiTool.getEndpointPath());
+            requestSpec = client.post().uri(uriPath);
         } else if (HttpMethodEnum.PUT.equals(apiTool.getHttpMethod())) {
-            requestSpec = client.put().uri(apiTool.getEndpointPath());
+            requestSpec = client.put().uri(uriPath);
         } else if (HttpMethodEnum.DELETE.equals(apiTool.getHttpMethod())) {
-            requestSpec = (WebClient.RequestBodySpec) client.delete().uri(apiTool.getEndpointPath());
+            requestSpec = (WebClient.RequestBodySpec) client.delete().uri(uriPath);
         } else if (HttpMethodEnum.PATCH.equals(apiTool.getHttpMethod())) {
-            requestSpec = client.patch().uri(apiTool.getEndpointPath());
+            requestSpec = client.patch().uri(uriPath);
         } else {
             throw new ToolExecutionException("Unsupported HTTP method: " + apiTool.getHttpMethod());
         }
+
+        // Configurar headers de autenticación
+        requestSpec = configureAuthenticationHeaders(apiTool, requestSpec);
 
         // Configurar el body para métodos que lo requieren
         Mono<Object> responseMono;
@@ -145,9 +150,10 @@ public class ToolExecutionService {
                     .retrieve()
                     .bodyToMono(Object.class);
         } else {
+            Map<String, Object> bodyParameters = prepareBodyParameters(apiTool, finalParameters);
             responseMono = requestSpec
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(parameters))
+                    .body(BodyInserters.fromValue(bodyParameters))
                     .retrieve()
                     .bodyToMono(Object.class);
         }
@@ -158,5 +164,96 @@ public class ToolExecutionService {
                 .retry(3)
                 .toFuture()
                 .join(); // Aquí estamos usando join() pero dentro de un CompletableFuture
+    }
+
+    private Map<String, Object> prepareParametersWithAuth(ApiTool apiTool, Map<String, Object> originalParameters) {
+        Map<String, Object> parameters = new java.util.HashMap<>(originalParameters);
+
+        // Añadir API key como parámetro si la localización es QUERY_PARAM
+        if (apiTool.getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
+            apiTool.getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
+            apiTool.getApiKeyName() != null &&
+            apiTool.getApiKeyValue() != null) {
+
+            parameters.put(apiTool.getApiKeyName(), apiTool.getApiKeyValue());
+        }
+
+        return parameters;
+    }
+
+    private String buildUriWithQueryParams(ApiTool apiTool, Map<String, Object> parameters) {
+        String basePath = apiTool.getEndpointPath();
+
+        // Para métodos GET y DELETE, añadir parámetros como query parameters
+        if (apiTool.getHttpMethod() == HttpMethodEnum.GET ||
+            apiTool.getHttpMethod() == HttpMethodEnum.DELETE) {
+
+            if (!parameters.isEmpty()) {
+                StringBuilder uriBuilder = new StringBuilder(basePath);
+                uriBuilder.append("?");
+
+                parameters.entrySet().forEach(entry -> {
+                    uriBuilder.append(entry.getKey())
+                             .append("=")
+                             .append(entry.getValue())
+                             .append("&");
+                });
+
+                // Remover el último &
+                if (uriBuilder.charAt(uriBuilder.length() - 1) == '&') {
+                    uriBuilder.setLength(uriBuilder.length() - 1);
+                }
+
+                return uriBuilder.toString();
+            }
+        }
+
+        return basePath;
+    }
+
+    private WebClient.RequestBodySpec configureAuthenticationHeaders(ApiTool apiTool, WebClient.RequestBodySpec requestSpec) {
+        if (apiTool.getAuthenticationType() == null || apiTool.getApiKeyValue() == null) {
+            return requestSpec;
+        }
+
+        switch (apiTool.getAuthenticationType()) {
+            case API_KEY:
+                if (apiTool.getApiKeyLocation() == ApiKeyLocationEnum.HEADER) {
+                    String headerName = apiTool.getApiKeyName() != null ? 
+                                      apiTool.getApiKeyName() : "X-API-Key";
+                    requestSpec = requestSpec.header(headerName, apiTool.getApiKeyValue());
+                }
+                break;
+
+            case BEARER_TOKEN:
+                requestSpec = requestSpec.header("Authorization", "Bearer " + apiTool.getApiKeyValue());
+                break;
+
+            case BASIC_AUTH:
+                requestSpec = requestSpec.header("Authorization", "Basic " + apiTool.getApiKeyValue());
+                break;
+
+            default:
+                log.warn("Unsupported authentication type: {}", apiTool.getAuthenticationType());
+                break;
+        }
+
+        return requestSpec;
+    }
+
+    private Map<String, Object> prepareBodyParameters(ApiTool apiTool, Map<String, Object> parameters) {
+        Map<String, Object> bodyParams = new java.util.HashMap<>(parameters);
+
+        // Remover parámetros de query si están en el body
+        if (apiTool.getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
+            apiTool.getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
+            apiTool.getApiKeyName() != null) {
+
+            // Para POST/PUT/PATCH, remover la API key del body si está configurada como query param
+            // ya que se maneja en la URL
+            bodyParams.remove(apiTool.getApiKeyName());
+        }
+
+        return bodyParams;
     }
 }
