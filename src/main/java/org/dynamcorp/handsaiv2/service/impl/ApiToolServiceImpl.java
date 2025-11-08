@@ -56,7 +56,7 @@ public class ApiToolServiceImpl implements ApiToolService {
                     .apiKeyValue(request.apiKeyValue()) // TODO: Hash this value before saving
                     .code(request.code())
                     .enabled(request.enabled())
-                    .healthy(false) // Inicialmente no verificada
+                    .healthy(true) // Inicialmente verificada
                     .build();
 
             // Guardar la entidad para obtener su ID

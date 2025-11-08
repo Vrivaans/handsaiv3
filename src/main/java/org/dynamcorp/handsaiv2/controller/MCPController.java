@@ -1,14 +1,29 @@
 package org.dynamcorp.handsaiv2.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.dynamcorp.handsaiv2.dto.*;
+import java.util.List;
+
+import org.dynamcorp.handsaiv2.dto.McpContent;
+import org.dynamcorp.handsaiv2.dto.McpError;
+import org.dynamcorp.handsaiv2.dto.McpResponse;
+import org.dynamcorp.handsaiv2.dto.McpTool;
+import org.dynamcorp.handsaiv2.dto.McpToolCallRequest;
+import org.dynamcorp.handsaiv2.dto.McpToolCallResponse;
+import org.dynamcorp.handsaiv2.dto.McpToolsListResponse;
+import org.dynamcorp.handsaiv2.dto.ToolDefinition;
+import org.dynamcorp.handsaiv2.dto.ToolDiscoveryResponse;
+import org.dynamcorp.handsaiv2.dto.ToolExecuteRequest;
+import org.dynamcorp.handsaiv2.dto.ToolExecuteResponse;
 import org.dynamcorp.handsaiv2.service.ToolDiscoveryService;
 import org.dynamcorp.handsaiv2.service.ToolExecutionService;
-import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/mcp")
