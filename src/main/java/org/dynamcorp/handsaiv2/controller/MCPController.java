@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/mcp")
@@ -31,108 +30,118 @@ import reactor.core.publisher.Mono;
 @CrossOrigin(origins = "*")
 public class MCPController {
 
-    private final ToolDiscoveryService toolDiscoveryService;
-    private final ToolExecutionService toolExecutionService;
+        private final ToolDiscoveryService toolDiscoveryService;
+        private final ToolExecutionService toolExecutionService;
 
-    @GetMapping("/tools/list")
-    public Mono<McpResponse<McpToolsListResponse>> discoverTools() {
-        return toolDiscoveryService.discoverTools()
-                .map(this::convertToMcpToolsList)
-                .map(result -> McpResponse.<McpToolsListResponse>builder()
-                        .jsonrpc("2.0")
-                        .result(result)
-                        .build())
-                .onErrorResume(ex -> Mono.just(McpResponse.<McpToolsListResponse>builder()
-                        .jsonrpc("2.0")
-                        .error(McpError.builder()
-                                .code(-32603)
-                                .message("Internal error discovering tools")
-                                .build())
-                        .build()));
-    }
+        @GetMapping("/tools/list")
+        public McpResponse<McpToolsListResponse> discoverTools() {
+                try {
+                        ToolDiscoveryResponse result = toolDiscoveryService.discoverTools();
+                        McpToolsListResponse mcpResult = convertToMcpToolsList(result);
 
-    @PostMapping("/tools/call")
-    public Mono<McpResponse<McpToolCallResponse>> executeApiTool(@RequestBody McpToolCallRequest request) {
-        // Validar request
-        if (request == null || request.getParams() == null) {
-            return Mono.just(McpResponse.<McpToolCallResponse>builder()
-                    .jsonrpc("2.0")
-                    .error(McpError.builder()
-                            .code(-32602)
-                            .message("Invalid params: missing required parameters")
-                            .build())
-                    .id(request != null ? request.getId() : null)
-                    .build());
+                        return McpResponse.<McpToolsListResponse>builder()
+                                        .jsonrpc("2.0")
+                                        .result(mcpResult)
+                                        .build();
+                } catch (Exception ex) {
+                        return McpResponse.<McpToolsListResponse>builder()
+                                        .jsonrpc("2.0")
+                                        .error(McpError.builder()
+                                                        .code(-32603)
+                                                        .message("Internal error discovering tools")
+                                                        .build())
+                                        .build();
+                }
         }
 
-        // Convertir request MCP a ToolExecuteRequest
-        ToolExecuteRequest toolRequest = new ToolExecuteRequest(
-                request.getParams().getName(),
-                request.getParams().getArguments(),
-                null // sessionId no es requerido en MCP
-        );
+        @PostMapping("/tools/call")
+        public McpResponse<McpToolCallResponse> executeApiTool(@RequestBody McpToolCallRequest request) {
+                // Validar request
+                if (request == null || request.params() == null) {
+                        return McpResponse.<McpToolCallResponse>builder()
+                                        .jsonrpc("2.0")
+                                        .error(McpError.builder()
+                                                        .code(-32602)
+                                                        .message("Invalid params: missing required parameters")
+                                                        .build())
+                                        .id(request != null ? request.id() : null)
+                                        .build();
+                }
 
-        return Mono.fromFuture(toolExecutionService.executeApiTool(toolRequest))
-                .map(this::convertToMcpToolCall)
-                .map(result -> McpResponse.<McpToolCallResponse>builder()
-                        .jsonrpc("2.0")
-                        .result(result)
-                        .id(request.getId())
-                        .build())
-                .onErrorResume(ex -> Mono.just(McpResponse.<McpToolCallResponse>builder()
-                        .jsonrpc("2.0")
-                        .error(McpError.builder()
-                                .code(getErrorCode(ex))
-                                .message(getErrorMessage(ex))
-                                .build())
-                        .id(request.getId())
-                        .build()));
-    }
+                try {
+                        // Convertir request MCP a ToolExecuteRequest
+                        ToolExecuteRequest toolRequest = new ToolExecuteRequest(
+                                        request.params().name(),
+                                        request.params().arguments(),
+                                        null // sessionId no es requerido en MCP
+                        );
 
-    private McpToolsListResponse convertToMcpToolsList(ToolDiscoveryResponse response) {
-        List<McpTool> mcpTools = response.tools().stream()
-                .map(this::convertToMcpTool)
-                .toList();
+                        ToolExecuteResponse response = toolExecutionService.executeApiTool(toolRequest);
+                        McpToolCallResponse mcpResult = convertToMcpToolCall(response);
 
-        return McpToolsListResponse.builder()
-                .tools(mcpTools)
-                .build();
-    }
+                        return McpResponse.<McpToolCallResponse>builder()
+                                        .jsonrpc("2.0")
+                                        .result(mcpResult)
+                                        .id(request.id())
+                                        .build();
 
-    private McpTool convertToMcpTool(ToolDefinition toolDef) {
-        return McpTool.builder()
-                .name(toolDef.name())
-                .description(toolDef.description())
-                .inputSchema(toolDef.parameters())
-                .build();
-    }
-
-    private McpToolCallResponse convertToMcpToolCall(ToolExecuteResponse response) {
-        String textContent = response.success() 
-                ? (response.result() != null ? response.result().toString() : "")
-                : (response.errorMessage() != null ? response.errorMessage() : "Error ejecutando herramienta");
-
-        McpContent content = McpContent.builder()
-                .type("text")
-                .text(textContent)
-                .build();
-
-        return McpToolCallResponse.builder()
-                .content(List.of(content))
-                .build();
-    }
-
-    private int getErrorCode(Throwable ex) {
-        if (ex instanceof IllegalArgumentException) {
-            return -32602; // Invalid params
+                } catch (Exception ex) {
+                        return McpResponse.<McpToolCallResponse>builder()
+                                        .jsonrpc("2.0")
+                                        .error(McpError.builder()
+                                                        .code(getErrorCode(ex))
+                                                        .message(getErrorMessage(ex))
+                                                        .build())
+                                        .id(request.id())
+                                        .build();
+                }
         }
-        return -32603; // Internal error
-    }
 
-    private String getErrorMessage(Throwable ex) {
-        if (ex instanceof IllegalArgumentException) {
-            return "Invalid params: " + ex.getMessage();
+        private McpToolsListResponse convertToMcpToolsList(ToolDiscoveryResponse response) {
+                List<McpTool> mcpTools = response.tools().stream()
+                                .map(this::convertToMcpTool)
+                                .toList();
+
+                return McpToolsListResponse.builder()
+                                .tools(mcpTools)
+                                .build();
         }
-        return "Internal error: " + ex.getMessage();
-    }
+
+        private McpTool convertToMcpTool(ToolDefinition toolDef) {
+                return McpTool.builder()
+                                .name(toolDef.name())
+                                .description(toolDef.description())
+                                .inputSchema(toolDef.parameters())
+                                .build();
+        }
+
+        private McpToolCallResponse convertToMcpToolCall(ToolExecuteResponse response) {
+                String textContent = response.success()
+                                ? (response.result() != null ? response.result().toString() : "")
+                                : (response.errorMessage() != null ? response.errorMessage()
+                                                : "Error ejecutando herramienta");
+
+                McpContent content = McpContent.builder()
+                                .type("text")
+                                .text(textContent)
+                                .build();
+
+                return McpToolCallResponse.builder()
+                                .content(List.of(content))
+                                .build();
+        }
+
+        private int getErrorCode(Throwable ex) {
+                if (ex instanceof IllegalArgumentException) {
+                        return -32602; // Invalid params
+                }
+                return -32603; // Internal error
+        }
+
+        private String getErrorMessage(Throwable ex) {
+                if (ex instanceof IllegalArgumentException) {
+                        return "Invalid params: " + ex.getMessage();
+                }
+                return "Internal error: " + ex.getMessage();
+        }
 }

@@ -29,8 +29,7 @@ public record ApiToolResponse(
         AuthenticationTypeEnum authenticationType,
         ApiKeyLocationEnum apiKeyLocation,
         String apiKeyName,
-        List<ToolParameterResponse> parameters
-) {
+        List<ToolParameterResponse> parameters) {
     public static ApiToolResponse from(ApiTool apiTool) {
         return new ApiToolResponse(
                 apiTool.getId(),
@@ -48,7 +47,6 @@ public record ApiToolResponse(
                 apiTool.getApiKeyName(),
                 apiTool.getParameters().stream()
                         .map(ToolParameterResponse::from)
-                        .collect(Collectors.toList())
-        );
+                        .collect(Collectors.toList()));
     }
 }

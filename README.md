@@ -1,8 +1,8 @@
-# HandsAI v2 - Microservicio de Gestión de Herramientas de IA
+# HandsAI - IA como cerebro, HandsAI como sus manos
 
 ## 🚀 Descripción
 
-HandsAI v2 es un microservicio reactivo construido con Spring Boot 3.2+ y Java 21 que permite a los Modelos de Lenguaje Grande (LLMs) descubrir y ejecutar herramientas dinámicamente a través de una interfaz unificada. El sistema soporta APIs REST con descubrimiento dinámico, validación de parámetros y ejecución tolerante a fallos.
+HandsAI es un microservicio construido con Spring Boot 3.2+ y Java 21 que permite a los Modelos de Lenguaje Grande (LLMs) descubrir y ejecutar herramientas dinámicamente a través de una interfaz unificada. El sistema soporta APIs REST con descubrimiento dinámico, validación de parámetros y ejecución tolerante a fallos.
 
 ### 🎯 Características Principales
 
@@ -10,12 +10,12 @@ HandsAI v2 es un microservicio reactivo construido con Spring Boot 3.2+ y Java 2
 - **Interfaz Unificada**: Un solo endpoint para ejecutar cualquier herramienta registrada
 - **Tolerancia a Fallos**: Manejo elegante de errores con logging completo
 - **Caché Inteligente**: Definiciones de herramientas cacheadas en memoria para alta performance
-- **Hilos Virtuales**: Aprovecha Java 21 para alta concurrencia sin bloqueo
+- **Hilos Virtuales**: Aprovecha Java 21 para alta concurrencia y escalabilidad
 
 ## 🛠️ Stack Tecnológico
 
-- **Framework**: Spring Boot 3.2+ con Spring WebFlux
-- **Java**: Java 21 LTS con Virtual Threads
+- **Framework**: Spring Boot 3.2+ (Spring MVC)
+- **Java**: Java 21 LTS con Virtual Threads habilitados
 - **Base de Datos**: PostgreSQL con Spring Data JPA
 - **Seguridad**: Spring Security con API Keys
 - **Build**: Maven

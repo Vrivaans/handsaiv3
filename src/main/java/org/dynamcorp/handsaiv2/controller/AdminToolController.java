@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/admin/tools")
@@ -29,41 +28,35 @@ public class AdminToolController {
 
     @PostMapping("/api")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<ApiToolResponse> createApiTool(@RequestBody CreateApiToolRequest request) {
-        return Mono.fromFuture(apiToolService.createApiTool(request))
-                .onErrorMap(ex -> new RuntimeException("Error al crear API Tool: " + ex.getMessage(), ex));
+    public ApiToolResponse createApiTool(@RequestBody CreateApiToolRequest request) {
+        return apiToolService.createApiTool(request);
     }
 
     @PutMapping("/api/{id}")
-    public Mono<ApiToolResponse> updateApiTool(
+    public ApiToolResponse updateApiTool(
             @PathVariable Long id,
             @RequestBody UpdateApiToolRequest request) {
-        return Mono.fromFuture(apiToolService.updateApiTool(id, request))
-                .onErrorMap(ex -> new RuntimeException("Error al actualizar API Tool con ID " + id + ": " + ex.getMessage(), ex));
+        return apiToolService.updateApiTool(id, request);
     }
 
     @GetMapping("/api/{id}")
-    public Mono<ApiToolResponse> getApiTool(@PathVariable Long id) {
-        return Mono.fromFuture(apiToolService.getApiTool(id))
-                .onErrorMap(ex -> new RuntimeException("Error al obtener API Tool con ID " + id + ": " + ex.getMessage(), ex));
+    public ApiToolResponse getApiTool(@PathVariable Long id) {
+        return apiToolService.getApiTool(id);
     }
 
     @GetMapping("/api")
-    public Mono<List<ApiToolResponse>> getAllApiTools() {
-        return Mono.fromFuture(apiToolService.getAllApiTools())
-                .onErrorMap(ex -> new RuntimeException("Error al obtener todas las API Tools: " + ex.getMessage(), ex));
+    public List<ApiToolResponse> getAllApiTools() {
+        return apiToolService.getAllApiTools();
     }
 
     @DeleteMapping("/api/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteApiTool(@PathVariable Long id) {
-        return Mono.fromFuture(apiToolService.deleteApiTool(id))
-                .onErrorMap(ex -> new RuntimeException("Error al eliminar API Tool con ID " + id + ": " + ex.getMessage(), ex));
+    public void deleteApiTool(@PathVariable Long id) {
+        apiToolService.deleteApiTool(id);
     }
 
     @PostMapping("/api/{id}/validate")
-    public Mono<ApiToolResponse> validateApiToolHealth(@PathVariable Long id) {
-        return Mono.fromFuture(apiToolService.validateApiToolHealth(id))
-                .onErrorMap(ex -> new RuntimeException("Error al validar salud de API Tool con ID " + id + ": " + ex.getMessage(), ex));
+    public ApiToolResponse validateApiToolHealth(@PathVariable Long id) {
+        return apiToolService.validateApiToolHealth(id);
     }
 }
