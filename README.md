@@ -220,3 +220,29 @@ Esta API implementa el Model Context Protocol (MCP) para la integración estanda
     "id": "msg_123"
   }
   ```</llm-patch>
+
+## 🌉 Integración con LLMs (HandsAI Bridge)
+
+Para conectar HandsAI con modelos como Claude Desktop o Claude Code, es necesario utilizar **HandsAI Bridge**, un adaptador que traduce el protocolo MCP sobre HTTP a stdio (entrada/salida estándar).
+
+### Configuración para Claude Code
+
+Agrega la siguiente configuración a tu archivo `config.json` de Claude Code (usualmente en `~/.claude/config.json` o similar, dependiendo de tu instalación):
+
+```json
+{
+  "mcpServers": {
+    "handsai": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "handsai-bridge",
+        "--api-url",
+        "http://localhost:8080"
+      ]
+    }
+  }
+}
+```
+
+Esto iniciará automáticamente el puente `handsai-bridge` cada vez que lances Claude, permitiéndole acceder a todas las herramientas registradas en HandsAI.
