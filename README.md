@@ -65,22 +65,21 @@ Estos endpoints se utilizan para gestionar el ciclo de vida de las `ApiTool`.
   ```json
   {
     "name": "Servicio de Clima",
+    "code": "clima",
+    "enabled": true,
     "description": "Obtiene el clima actual para una ciudad específica.",
     "baseUrl": "https://api.weatherapi.com",
     "endpointPath": "/v1/current.json",
     "httpMethod": "GET",
+    "authenticationType": "API_KEY",
+    "apiKeyLocation": "QUERY_PARAMETER",
+    "apiKeyName": "key",
+    "apiKeyValue": "<API_KEY>",
     "parameters": [
       {
         "name": "q",
         "type": "STRING",
         "description": "Nombre de la ciudad",
-        "required": true,
-        "defaultValue": null
-      },
-      {
-        "name": "key",
-        "type": "STRING",
-        "description": "API Key para el servicio de clima",
         "required": true,
         "defaultValue": null
       }

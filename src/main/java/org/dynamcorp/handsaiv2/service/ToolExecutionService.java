@@ -166,7 +166,7 @@ public class ToolExecutionService {
                 apiTool.getApiKeyName() != null &&
                 apiTool.getApiKeyValue() != null) {
 
-            parameters.put(apiTool.getApiKeyName(), apiTool.getApiKeyValue());
+            parameters.put(apiTool.getApiKeyName(), encryptionService.decrypt(apiTool.getApiKeyValue()));
         }
 
         return parameters;
@@ -228,7 +228,7 @@ public class ToolExecutionService {
                 break;
 
             case BASIC_AUTH:
-                requestSpec.header("Authorization", "Basic " + apiTool.getApiKeyValue());
+                requestSpec.header("Authorization", "Basic " + encryptionService.decrypt(apiTool.getApiKeyValue()));
                 break;
 
             default:
