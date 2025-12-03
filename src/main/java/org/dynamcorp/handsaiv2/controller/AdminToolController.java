@@ -2,6 +2,7 @@ package org.dynamcorp.handsaiv2.controller;
 
 import java.util.List;
 
+import org.dynamcorp.handsaiv2.dto.ApiResponse;
 import org.dynamcorp.handsaiv2.dto.ApiToolResponse;
 import org.dynamcorp.handsaiv2.dto.CreateApiToolRequest;
 import org.dynamcorp.handsaiv2.dto.UpdateApiToolRequest;
@@ -27,9 +28,10 @@ public class AdminToolController {
     private final ApiToolService apiToolService;
 
     @PostMapping("/api")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiToolResponse createApiTool(@RequestBody CreateApiToolRequest request) {
-        return apiToolService.createApiTool(request);
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse createApiTool(@RequestBody CreateApiToolRequest request) {
+        apiToolService.createApiTool(request);
+        return new ApiResponse(HttpStatus.OK.value(), "Tool creada correctamente");
     }
 
     @PutMapping("/api/{id}")
