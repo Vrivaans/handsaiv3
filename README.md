@@ -14,7 +14,7 @@ HandsAI es un microservicio construido con Spring Boot 3.2+ y Java 21 que permit
 
 ## 🛠️ Stack Tecnológico
 
-- **Framework**: Spring Boot 3.2+ (Spring MVC)
+- **Framework**: Spring Boot 3.5.4 (Spring MVC)
 - **Java**: Java 21 LTS con Virtual Threads habilitados
 - **Base de Datos**: PostgreSQL con Spring Data JPA
 - **Seguridad**: Spring Security con API Keys
@@ -146,58 +146,62 @@ Estos endpoints se utilizan para gestionar el ciclo de vida de las `ApiTool`.
 - **Endpoint**: `DELETE /admin/tools/api/{id}`
 - **Descripción**: Elimina una herramienta del sistema.
 
-### API Pública (`/api/tools`)
+### API MCP (`/mcp`)
 
-Estos endpoints están diseñados para ser consumidos por LLMs.
+Esta API implementa el Model Context Protocol (MCP) para la integración estandarizada con LLMs.
 
-#### 1. Descubrir Herramientas
+#### 1. Listar Herramientas (Discovery)
 
-- **Endpoint**: `GET /api/tools/discover`
-- **Descripción**: Devuelve una lista de todas las herramientas activas y saludables que un LLM puede utilizar.
+- **Endpoint**: `GET /mcp/tools/list`
+- **Descripción**: Devuelve la lista de herramientas disponibles en formato MCP.
 - **Response Body (Ejemplo)**:
 
   ```json
   {
-    "tools": [
-      {
-        "name": "Servicio de Clima",
-        "description": "Obtiene el clima actual para una ciudad específica.",
-        "type": "api_tool",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "q": {
-              "type": "string",
-              "description": "Nombre de la ciudad"
+    "jsonrpc": "2.0",
+    "result": {
+      "tools": [
+        {
+          "name": "Servicio de Clima",
+          "description": "Obtiene el clima actual para una ciudad específica.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "q": {
+                "type": "string",
+                "description": "Nombre de la ciudad"
+              },
+              "key": {
+                "type": "string",
+                "description": "API Key para el servicio de clima"
+              }
             },
-            "key": {
-              "type": "string",
-              "description": "API Key para el servicio de clima"
-            }
-          },
-          "required": ["q", "key"]
+            "required": ["q", "key"]
+          }
         }
-      }
-    ],
-    "totalCount": 1,
-    "lastUpdated": "2025-08-21T10:05:00Z"
+      ]
+    }
   }
   ```
 
-#### 2. Ejecutar una Herramienta
+#### 2. Ejecutar Herramienta (Call)
 
-- **Endpoint**: `POST /api/tools/execute`
-- **Descripción**: Ejecuta una herramienta específica con los parámetros proporcionados.
+- **Endpoint**: `POST /mcp/tools/call`
+- **Descripción**: Ejecuta una herramienta específica siguiendo el protocolo MCP.
 - **Request Body**:
 
   ```json
   {
-    "toolName": "Servicio de Clima",
-    "parameters": {
-      "q": "Buenos Aires",
-      "key": "YOUR_API_KEY"
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "Servicio de Clima",
+      "arguments": {
+        "q": "Buenos Aires",
+        "key": "YOUR_API_KEY"
+      }
     },
-    "sessionId": "conv_12345"
+    "id": "msg_123"
   }
   ```
 
@@ -205,21 +209,15 @@ Estos endpoints están diseñados para ser consumidos por LLMs.
 
   ```json
   {
-    "success": true,
+    "jsonrpc": "2.0",
     "result": {
-      "location": {
-        "name": "Buenos Aires",
-        "region": "Distrito Federal",
-        "country": "Argentina"
-      },
-      "current": {
-        "temp_c": 15.0,
-        "condition": {
-          "text": "Partly cloudy"
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"location\":{\"name\":\"Buenos Aires\"},\"current\":{\"temp_c\":15.0}}"
         }
-      }
+      ]
     },
-    "executionTimeMs": 750,
-    "toolType": "api_tool"
+    "id": "msg_123"
   }
   ```</llm-patch>

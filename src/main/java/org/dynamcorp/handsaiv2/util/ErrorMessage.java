@@ -1,4 +1,4 @@
-package org.dynamcorp.handsaiv2.utils;
+package org.dynamcorp.handsaiv2.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

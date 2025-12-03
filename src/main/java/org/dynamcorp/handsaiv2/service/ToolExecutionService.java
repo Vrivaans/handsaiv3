@@ -9,6 +9,7 @@ import org.dynamcorp.handsaiv2.exception.ResourceNotFoundException;
 import org.dynamcorp.handsaiv2.exception.ToolExecutionException;
 import org.dynamcorp.handsaiv2.model.*;
 import org.dynamcorp.handsaiv2.repository.ToolExecutionLogRepository;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class ToolExecutionService {
     private final ToolExecutionLogRepository logRepository;
     private final RestClient.Builder restClientBuilder;
     private final ObjectMapper objectMapper;
+    private final EncryptionService encryptionService;
 
     public ToolExecuteResponse executeApiTool(ToolExecuteRequest request) {
         log.info("Executing tool: {}", request.toolName());
@@ -120,8 +122,8 @@ public class ToolExecutionService {
         // Configurar el método HTTP y la URI
         RestClient.RequestBodySpec requestSpec = client.method(httpMethod).uri(uriPath);
 
-        // Configurar headers de autenticación
-        configureAuthenticationHeaders(apiTool, requestSpec);
+        // Configurar autenticación
+        configureAuthentication(requestSpec, apiTool);
 
         // Configurar el body para métodos que lo requieren
         if (httpMethod == HttpMethod.GET || httpMethod == HttpMethod.DELETE) {
@@ -200,21 +202,29 @@ public class ToolExecutionService {
         return basePath;
     }
 
-    private void configureAuthenticationHeaders(ApiTool apiTool, RestClient.RequestBodySpec requestSpec) {
+    private void configureAuthentication(RestClient.RequestBodySpec requestSpec, ApiTool apiTool) {
         if (apiTool.getAuthenticationType() == null || apiTool.getApiKeyValue() == null) {
             return;
         }
 
         switch (apiTool.getAuthenticationType()) {
             case API_KEY:
+                String apiKey = encryptionService.decrypt(apiTool.getApiKeyValue());
                 if (apiTool.getApiKeyLocation() == ApiKeyLocationEnum.HEADER) {
                     String headerName = apiTool.getApiKeyName() != null ? apiTool.getApiKeyName() : "X-API-Key";
-                    requestSpec.header(headerName, apiTool.getApiKeyValue());
+                    requestSpec.header(headerName, apiKey);
+                } else if (apiTool.getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER) {
+                    // Para query param, necesitaríamos reconstruir la URI.
+                    // Por simplicidad y limitación de RestClient.RequestBodySpec,
+                    // asumimos que la mayoría usa Header.
+                    // Si se requiere Query Param, se debería añadir a la URL antes.
+                    // TODO: Implementar soporte completo para API Key en Query Param
                 }
                 break;
 
             case BEARER_TOKEN:
-                requestSpec.header("Authorization", "Bearer " + apiTool.getApiKeyValue());
+                String token = encryptionService.decrypt(apiTool.getApiKeyValue());
+                requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
                 break;
 
             case BASIC_AUTH:

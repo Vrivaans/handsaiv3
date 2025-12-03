@@ -4,16 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dynamcorp.handsaiv2.dto.ApiToolResponse;
 import org.dynamcorp.handsaiv2.dto.CreateApiToolRequest;
-import org.dynamcorp.handsaiv2.dto.ToolParameterRequest;
 import org.dynamcorp.handsaiv2.dto.UpdateApiToolRequest;
 import org.dynamcorp.handsaiv2.exception.ResourceNotFoundException;
 import org.dynamcorp.handsaiv2.model.ApiTool;
-import org.dynamcorp.handsaiv2.model.AuthenticationTypeEnum;
 import org.dynamcorp.handsaiv2.model.ToolParameter;
 import org.dynamcorp.handsaiv2.repository.ApiToolRepository;
 import org.dynamcorp.handsaiv2.service.ApiToolService;
+import org.dynamcorp.handsaiv2.service.EncryptionService;
 import org.dynamcorp.handsaiv2.service.ToolCacheManager;
 import org.dynamcorp.handsaiv2.service.ToolValidationService;
+import org.dynamcorp.handsaiv2.util.SecurityValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +30,24 @@ public class ApiToolServiceImpl implements ApiToolService {
     private final ApiToolRepository apiToolRepository;
     private final ToolValidationService toolValidationService;
     private final ToolCacheManager toolCacheManager;
+    private final EncryptionService encryptionService;
+    private final SecurityValidator securityValidator;
 
     @Override
     @Transactional
     public ApiToolResponse createApiTool(CreateApiToolRequest request) {
-        validateData(request);
+        log.info("Creating new API tool: {}", request.name());
 
-        // Crear la entidad ApiTool
+        // Validate URL for SSRF
+        securityValidator.validateUrl(request.baseUrl());
+
+        if (apiToolRepository.existsByCode(request.code())) {
+            throw new IllegalArgumentException("Tool with code " + request.code() + " already exists");
+        }
+
         ApiTool apiTool = ApiTool.builder()
                 .name(request.name())
+                .code(request.code())
                 .description(request.description())
                 .baseUrl(request.baseUrl())
                 .endpointPath(request.endpointPath())
@@ -46,137 +55,113 @@ public class ApiToolServiceImpl implements ApiToolService {
                 .authenticationType(request.authenticationType())
                 .apiKeyLocation(request.apiKeyLocation())
                 .apiKeyName(request.apiKeyName())
-                .apiKeyValue(request.apiKeyValue()) // TODO: Hash this value before saving
-                .code(request.code())
-                .enabled(request.enabled())
-                .healthy(true) // Inicialmente verificada
+                .apiKeyValue(encryptionService.encrypt(request.apiKeyValue()))
+                .enabled(request.enabled() != null ? request.enabled() : true)
+                .healthy(false) // Initially false until validated
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
-        // Guardar la entidad para obtener su ID
+        if (request.parameters() != null) {
+            List<ToolParameter> parameters = request.parameters().stream()
+                    .map(p -> ToolParameter.builder()
+                            .apiTool(apiTool)
+                            .name(p.name())
+                            .code(UUID.randomUUID().toString())
+                            .type(p.type())
+                            .description(p.description())
+                            .required(p.required())
+                            .defaultValue(p.defaultValue())
+                            .enabled(true)
+                            .createdAt(Instant.now())
+                            .updatedAt(Instant.now())
+                            .build())
+                    .collect(Collectors.toList());
+            apiTool.setParameters(parameters);
+        }
+
         ApiTool savedTool = apiToolRepository.save(apiTool);
 
-        // Crear y asignar los parámetros
-        List<ToolParameter> parameters = request.parameters().stream()
-                .map(paramRequest -> createToolParameter(paramRequest, savedTool))
-                .collect(Collectors.toList());
-
-        savedTool.setParameters(parameters);
-
-        // Validar la salud de la herramienta
+        // Trigger health check synchronously (on virtual thread)
         validateHealth(savedTool);
 
-        toolCacheManager.addOrUpdateTool(savedTool);
+        // Refresh cache
+        toolCacheManager.refreshCache();
 
         return ApiToolResponse.from(savedTool);
-    }
-
-    public void validateData(CreateApiToolRequest request) {
-        if (request.name() == null || request.name().isBlank()) {
-            throw new IllegalArgumentException("ApiTool name is required");
-        }
-        if (request.description() == null || request.description().isBlank()) {
-            throw new IllegalArgumentException("ApiTool description is required");
-        }
-        if (request.enabled() == null) {
-            throw new IllegalArgumentException("ApiTool enabled is required");
-        }
-        if (request.baseUrl() == null || request.baseUrl().isBlank()) {
-            throw new IllegalArgumentException("ApiTool baseUrl is required");
-        }
-        if (request.endpointPath() == null || request.endpointPath().isBlank()) {
-            throw new IllegalArgumentException("ApiTool endpointPath is required");
-        }
-        if (request.httpMethod() == null) {
-            throw new IllegalArgumentException("ApiTool httpMethod is required");
-        }
-        if (request.authenticationType() == null) {
-            throw new IllegalArgumentException("ApiTool authenticationType is required");
-        }
-        if (request.apiKeyLocation() == null) {
-            throw new IllegalArgumentException("ApiTool apiKeyLocation is required");
-        }
-
-        // Solo validar apiKeyName y apiKeyValue si la autenticación no es NONE
-        if (request.authenticationType() != AuthenticationTypeEnum.NONE) {
-            if (request.apiKeyName() == null || request.apiKeyName().isBlank()) {
-                throw new IllegalArgumentException("ApiTool apiKeyName is required when authentication is not NONE");
-            }
-            if (request.apiKeyValue() == null || request.apiKeyValue().isBlank()) {
-                throw new IllegalArgumentException("ApiTool apiKeyValue is required when authentication is not NONE");
-            }
-        }
-
-        if (request.code() == null || request.code().isBlank()) {
-            throw new IllegalArgumentException("ApiTool code is required");
-        }
-        if (request.parameters() == null || request.parameters().isEmpty()) {
-            throw new IllegalArgumentException("ApiTool parameters is required");
-        }
-        validateParametersData(request);
-    }
-
-    public void validateParametersData(CreateApiToolRequest request) {
-        if (request.parameters() != null || !request.parameters().isEmpty()) {
-            request.parameters().forEach(paramRequest -> {
-                if (paramRequest.name() == null || paramRequest.name().isBlank()) {
-                    throw new IllegalArgumentException("ApiTool parameter name is required");
-                }
-                if (paramRequest.type() == null) {
-                    throw new IllegalArgumentException("ApiTool parameter type is required");
-                }
-                if (paramRequest.description() == null || paramRequest.description().isBlank()) {
-                    throw new IllegalArgumentException("ApiTool parameter description is required");
-                }
-                if (paramRequest.required() == null) {
-                    throw new IllegalArgumentException("ApiTool parameter required is required");
-                }
-            });
-        }
     }
 
     @Override
     @Transactional
     public ApiToolResponse updateApiTool(Long id, UpdateApiToolRequest request) {
+        log.info("Updating API tool with id: {}", id);
+
         ApiTool apiTool = apiToolRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ApiTool not found with id: " + id));
 
-        apiTool.setName(request.name());
-        apiTool.setDescription(request.description());
-        apiTool.setBaseUrl(request.baseUrl());
-        apiTool.setEndpointPath(request.endpointPath());
-        apiTool.setHttpMethod(request.httpMethod());
-        apiTool.setEnabled(request.enabled());
-        apiTool.setAuthenticationType(request.authenticationType());
-        apiTool.setApiKeyLocation(request.apiKeyLocation());
-        apiTool.setApiKeyName(request.apiKeyName());
-
-        // The API key value is optional during updates.
-        // Only update it if a new non-blank value is provided.
-        if (request.apiKeyValue() != null && !request.apiKeyValue().isBlank()) {
-            apiTool.setApiKeyValue(request.apiKeyValue()); // TODO: Hash this value before saving
+        // Validate URL for SSRF if changed
+        if (request.baseUrl() != null) {
+            securityValidator.validateUrl(request.baseUrl());
+            apiTool.setBaseUrl(request.baseUrl());
         }
 
+        if (request.name() != null)
+            apiTool.setName(request.name());
+        if (request.description() != null)
+            apiTool.setDescription(request.description());
+        if (request.endpointPath() != null)
+            apiTool.setEndpointPath(request.endpointPath());
+        if (request.httpMethod() != null)
+            apiTool.setHttpMethod(request.httpMethod());
+        if (request.authenticationType() != null)
+            apiTool.setAuthenticationType(request.authenticationType());
+        if (request.apiKeyLocation() != null)
+            apiTool.setApiKeyLocation(request.apiKeyLocation());
+        if (request.apiKeyName() != null)
+            apiTool.setApiKeyName(request.apiKeyName());
+        if (request.apiKeyValue() != null) {
+            apiTool.setApiKeyValue(encryptionService.encrypt(request.apiKeyValue()));
+        }
+
+        apiTool.setEnabled(request.enabled());
+        apiTool.setUpdatedAt(Instant.now());
+
         // Limpiar parámetros existentes y agregar los nuevos
-        apiTool.getParameters().clear();
+        if (request.parameters() != null) {
+            apiTool.getParameters().clear();
+            List<ToolParameter> updatedParameters = request.parameters().stream()
+                    .map(paramRequest -> ToolParameter.builder()
+                            .name(paramRequest.name())
+                            .type(paramRequest.type())
+                            .description(paramRequest.description())
+                            .required(paramRequest.required())
+                            .defaultValue(paramRequest.defaultValue())
+                            .apiTool(apiTool)
+                            .code(UUID.randomUUID().toString())
+                            .enabled(true)
+                            .createdAt(Instant.now())
+                            .updatedAt(Instant.now())
+                            .build())
+                    .collect(Collectors.toList());
+            apiTool.getParameters().addAll(updatedParameters);
+        }
 
-        List<ToolParameter> updatedParameters = request.parameters().stream()
-                .map(paramRequest -> createToolParameter(paramRequest, apiTool))
-                .collect(Collectors.toList());
+        ApiTool savedTool = apiToolRepository.save(apiTool);
 
-        apiTool.getParameters().addAll(updatedParameters);
+        // Trigger health check
+        validateHealth(savedTool);
 
-        // Validar la salud de la herramienta
-        validateHealth(apiTool);
+        // Refresh cache
+        toolCacheManager.refreshCache();
 
-        return ApiToolResponse.from(apiToolRepository.save(apiTool));
+        return ApiToolResponse.from(savedTool);
     }
 
     @Override
     public ApiToolResponse getApiTool(Long id) {
-        ApiTool apiTool = apiToolRepository.findById(id)
+        return apiToolRepository.findById(id)
+                .map(ApiToolResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("ApiTool not found with id: " + id));
-
-        return ApiToolResponse.from(apiTool);
     }
 
     @Override
@@ -189,11 +174,12 @@ public class ApiToolServiceImpl implements ApiToolService {
     @Override
     @Transactional
     public void deleteApiTool(Long id) {
+        log.info("Deleting API tool with id: {}", id);
         if (!apiToolRepository.existsById(id)) {
             throw new ResourceNotFoundException("ApiTool not found with id: " + id);
         }
-
         apiToolRepository.deleteById(id);
+        toolCacheManager.refreshCache();
     }
 
     @Override
@@ -201,9 +187,7 @@ public class ApiToolServiceImpl implements ApiToolService {
     public ApiToolResponse validateApiToolHealth(Long id) {
         ApiTool apiTool = apiToolRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ApiTool not found with id: " + id));
-
         validateHealth(apiTool);
-
         return ApiToolResponse.from(apiTool);
     }
 
@@ -211,18 +195,6 @@ public class ApiToolServiceImpl implements ApiToolService {
     public ApiTool getApiToolByCode(String code) {
         return apiToolRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("ApiTool not found with code: " + code));
-    }
-
-    private ToolParameter createToolParameter(ToolParameterRequest request, ApiTool apiTool) {
-        return ToolParameter.builder()
-                .name(request.name())
-                .type(request.type())
-                .description(request.description())
-                .required(request.required())
-                .defaultValue(request.defaultValue())
-                .apiTool(apiTool)
-                .code(UUID.randomUUID().toString().substring(0, 8))
-                .build();
     }
 
     private void validateHealth(ApiTool apiTool) {

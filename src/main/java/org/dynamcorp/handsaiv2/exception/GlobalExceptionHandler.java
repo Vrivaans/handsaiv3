@@ -1,7 +1,7 @@
 package org.dynamcorp.handsaiv2.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.dynamcorp.handsaiv2.utils.ErrorMessage;
+import org.dynamcorp.handsaiv2.util.ErrorMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Manejador global de excepciones para todos los controladores de la aplicación.
- * Centraliza la lógica de manejo de errores y proporciona respuestas JSON estructuradas.
+ * Manejador global de excepciones para todos los controladores de la
+ * aplicación.
+ * Centraliza la lógica de manejo de errores y proporciona respuestas JSON
+ * estructuradas.
  */
 @ControllerAdvice
 @Slf4j
@@ -25,8 +27,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 "Recurso no encontrado",
                 ex.getClass().getSimpleName(),
-                HttpStatus.NOT_FOUND.value()
-        );
+                HttpStatus.NOT_FOUND.value());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
     }
 
@@ -39,8 +40,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 "Error en la ejecución de herramienta",
                 ex.getClass().getSimpleName(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
     }
 
@@ -53,8 +53,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 "Error interno del servidor",
                 ex.getClass().getSimpleName(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
     }
 
@@ -67,8 +66,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 "Parámetros inválidos",
                 ex.getClass().getSimpleName(),
-                HttpStatus.BAD_REQUEST.value()
-        );
+                HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 
@@ -81,8 +79,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 "Estado de la operación inválido",
                 ex.getClass().getSimpleName(),
-                HttpStatus.CONFLICT.value()
-        );
+                HttpStatus.CONFLICT.value());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessage);
     }
 
@@ -95,8 +92,7 @@ public class GlobalExceptionHandler {
                 "Se ha encontrado una referencia nula inesperada",
                 "Error interno del servidor",
                 ex.getClass().getSimpleName(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
     }
 
@@ -109,8 +105,7 @@ public class GlobalExceptionHandler {
                 "Ha ocurrido un error inesperado: " + ex.getMessage(),
                 "Error interno del servidor",
                 ex.getClass().getSimpleName(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
     }
 }
