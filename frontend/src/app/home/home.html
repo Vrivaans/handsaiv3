@@ -1,0 +1,74 @@
+<div class="container">
+  <header>
+    <h1>HandsAI</h1>
+    <p>IA como cerebro, HandsAI como sus manos</p>
+  </header>
+
+  <main>
+    <div class="status-bar">
+      <div class="card status-card">
+        <h2>Estado</h2>
+        <div class="status-indicator">
+          <span class="dot online"></span>
+          <span>Sistema Operativo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Active Tools Section -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Herramientas Activas (Agent)</h2>
+          <span class="badge">{{ activeTools.length }}</span>
+        </div>
+        <p class="description">Herramientas disponibles para el agente vía MCP.</p>
+
+        <div class="tool-list">
+          @for (tool of activeTools; track tool.name) {
+          <div class="tool-item">
+            <div class="tool-icon">⚡</div>
+            <div class="tool-content">
+              <h3>{{ tool.name }}</h3>
+              <p>{{ tool.description }}</p>
+            </div>
+          </div>
+          } @empty {
+          <p class="empty-state">No hay herramientas activas.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Stored Tools Section -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Herramientas Guardadas (DB)</h2>
+          <span class="badge secondary">{{ storedTools.length }}</span>
+        </div>
+        <p class="description">Todas las definiciones registradas en la base de datos.</p>
+
+        <div class="tool-list">
+          @for (tool of storedTools; track tool.id) {
+          <div class="tool-item">
+            <div class="tool-icon" [class.disabled]="!tool.enabled">
+              {{ tool.enabled ? '🟢' : '⚪' }}
+            </div>
+            <div class="tool-content">
+              <h3>{{ tool.name }}</h3>
+              <code class="tool-code">{{ tool.code }}</code>
+              <p>{{ tool.description }}</p>
+            </div>
+            <div class="tool-status">
+              <span class="status-tag" [class.success]="tool.healthy" [class.error]="!tool.healthy">
+                {{ tool.healthy ? 'Healthy' : 'Unhealthy' }}
+              </span>
+            </div>
+          </div>
+          } @empty {
+          <p class="empty-state">No hay herramientas registradas.</p>
+          }
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
