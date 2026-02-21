@@ -1,0 +1,116 @@
+<div class="container">
+    <header>
+        <h1>Analíticas de Ejecución</h1>
+        <p>Monitorea y audita cómo el agente de IA está utilizando las herramientas.</p>
+    </header>
+
+    <main>
+        <!-- Alerts -->
+        <div *ngIf="error" class="alert error">{{ error }}</div>
+
+        <div *ngIf="isLoading && !summary" class="loading-state">
+            Cargando analíticas...
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid" *ngIf="summary">
+            <div class="card metric-card">
+                <h3>Total Ejecuciones (30 días)</h3>
+                <div class="metric-value">{{ summary.totalExecutions }}</div>
+            </div>
+
+            <div class="card metric-card">
+                <h3>Ejecuciones Exitosas</h3>
+                <div class="metric-value success">{{ summary.successfulExecutions }}</div>
+            </div>
+
+            <div class="card metric-card">
+                <h3>Ratio de Éxito</h3>
+                <div class="metric-value" [class.warning]="summary.successRatePercentage < 80"
+                    [class.success]="summary.successRatePercentage >= 80">
+                    {{ summary.successRatePercentage | number:'1.0-1' }}%
+                </div>
+            </div>
+
+            <div class="card metric-card">
+                <h3>Latencia Promedio</h3>
+                <div class="metric-value">{{ summary.averageLatencyMs | number:'1.0-0' }} ms</div>
+            </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="card logs-card" *ngIf="!isLoading || logs.length > 0">
+            <div class="card-header">
+                <h2>Historial de Ejecuciones</h2>
+                <span class="badge">{{ totalElements }} registros</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Herramienta</th>
+                            <th>Estado</th>
+                            <th>Latencia</th>
+                            <th>Payloads</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let log of logs">
+                            <td class="col-date">{{ log.executedAt | date:'short' }}</td>
+                            <td class="col-tool"><strong>{{ log.toolName }}</strong></td>
+                            <td class="col-status">
+                                <span class="status-tag" [class.success]="log.success" [class.error]="!log.success">
+                                    {{ log.success ? 'Éxito' : 'Error' }}
+                                </span>
+                            </td>
+                            <td class="col-latency">{{ log.executionTimeMs }} ms</td>
+                            <td class="col-payloads">
+                                <button class="btn-link" (click)="openLogDetails(log)">▶ Ver Detalles</button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="logs.length === 0">
+                            <td colspan="5" class="empty-state">No hay registros de ejecución todavía.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" *ngIf="totalPages > 1">
+                <button class="btn ghost" [disabled]="currentPage === 0" (click)="prevPage()">Anterior</button>
+                <span>Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+                <button class="btn ghost" [disabled]="currentPage >= totalPages - 1"
+                    (click)="nextPage()">Siguiente</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Log Details Modal -->
+    <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+        <div class="modal-content large" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Detalles de Ejecución: {{ selectedLog?.toolName }}</h3>
+                <button class="close-btn" (click)="closeModal()">✕</button>
+            </div>
+
+            <div class="modal-body" *ngIf="selectedLog">
+                <div *ngIf="!selectedLog.success" class="error-banner">
+                    <h4>Mensaje de Error</h4>
+                    <pre>{{ selectedLog.errorMessage }}</pre>
+                </div>
+
+                <div class="payload-box">
+                    <h4>Request Payload</h4>
+                    <pre><code>{{ formatPayload(selectedLog.requestPayload || '') }}</code></pre>
+                </div>
+
+                <div class="payload-box">
+                    <h4>Response Payload</h4>
+                    <pre><code>{{ formatPayload(selectedLog.responsePayload || '') }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

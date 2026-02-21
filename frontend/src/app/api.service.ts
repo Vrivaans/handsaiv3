@@ -3,13 +3,46 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface ApiTool {
-    id: number;
+    id?: number;
     name: string;
-    description: string;
-    enabled: boolean;
-    healthy: boolean;
     code: string;
+    description: string;
     baseUrl: string;
+    endpointPath: string;
+    httpMethod: string;
+    authenticationType: string;
+    apiKeyLocation: string;
+    apiKeyName?: string;
+    apiKeyValue?: string;
+    enabled: boolean;
+    healthy?: boolean;
+}
+
+export interface AnalyticsSummary {
+    totalExecutions: number;
+    successfulExecutions: number;
+    successRatePercentage: number;
+    averageLatencyMs: number;
+}
+
+export interface ToolExecutionLog {
+    id: number;
+    toolName: string;
+    sessionId: string;
+    requestPayload: string;
+    responsePayload: string;
+    executionTimeMs: number;
+    success: boolean;
+    errorMessage: string;
+    executedAt: string;
+}
+
+export interface PageResponse<T> {
+    content: T[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
 }
 
 export interface McpTool {
@@ -48,5 +81,14 @@ export class ApiService {
     // Eliminar herramienta en BD (Admin API)
     deleteApiTool(id: number): Observable<void> {
         return this.http.delete<void>(`/admin/tools/api/${id}`);
+    }
+
+    // Analytics endpoints
+    getAnalyticsSummary(days: number = 30): Observable<AnalyticsSummary> {
+        return this.http.get<AnalyticsSummary>(`/admin/analytics/summary?days=${days}`);
+    }
+
+    getExecutionLogs(page: number = 0, size: number = 20): Observable<PageResponse<ToolExecutionLog>> {
+        return this.http.get<PageResponse<ToolExecutionLog>>(`/admin/analytics/logs?page=${page}&size=${size}`);
     }
 }

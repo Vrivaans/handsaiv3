@@ -30,6 +30,7 @@ public class ToolExecutionService {
     private final RestClient.Builder restClientBuilder;
     private final ObjectMapper objectMapper;
     private final EncryptionService encryptionService;
+    private final org.dynamcorp.handsaiv2.util.LogObfuscator logObfuscator;
 
     public ToolExecuteResponse executeApiTool(ToolExecuteRequest request) {
         log.info("Executing tool: {}", request.toolName());
@@ -56,16 +57,16 @@ public class ToolExecutionService {
 
             executionLog.setApiTool(apiTool);
 
-            // Convertir los parámetros a JSON para el log
+            // Convertir los parámetros a JSON y ofuscar para el log
             String requestPayload = objectMapper.writeValueAsString(request.parameters());
-            executionLog.setRequestPayload(requestPayload);
+            executionLog.setRequestPayload(logObfuscator.obfuscate(requestPayload));
 
             // Ejecutar la llamada a la API externa
             Object result = executeApiCall(apiTool, request.parameters());
 
-            // Convertir el resultado a JSON para el log
+            // Convertir el resultado a JSON y ofuscar para el log
             String responsePayload = objectMapper.writeValueAsString(result);
-            executionLog.setResponsePayload(responsePayload);
+            executionLog.setResponsePayload(logObfuscator.obfuscate(responsePayload));
             executionLog.setSuccess(true);
 
             // Calcular tiempo de ejecución
