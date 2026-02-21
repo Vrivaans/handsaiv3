@@ -40,7 +40,9 @@ export class HomeComponent implements OnInit {
         });
     }
 
-    deleteTool(id: number) {
+    deleteTool(id: number, event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
         if (confirm('¿Estás seguro de que deseas eliminar esta herramienta?')) {
             this.apiService.deleteApiTool(id).subscribe({
                 next: () => {
