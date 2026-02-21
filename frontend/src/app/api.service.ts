@@ -44,4 +44,9 @@ export class ApiService {
     createApiTool(toolData: any): Observable<ApiTool> {
         return this.http.post<ApiTool>('/admin/tools/api', toolData);
     }
+
+    // Eliminar herramienta en BD (Admin API)
+    deleteApiTool(id: number): Observable<void> {
+        return this.http.delete<void>(`/admin/tools/api/${id}`);
+    }
 }

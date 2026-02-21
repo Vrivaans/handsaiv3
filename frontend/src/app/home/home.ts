@@ -39,4 +39,15 @@ export class HomeComponent implements OnInit {
             }
         });
     }
+
+    deleteTool(id: number) {
+        if (confirm('¿Estás seguro de que deseas eliminar esta herramienta?')) {
+            this.apiService.deleteApiTool(id).subscribe({
+                next: () => {
+                    this.loadData();
+                },
+                error: (err) => console.error('Error deleting tool', err)
+            });
+        }
+    }
 }

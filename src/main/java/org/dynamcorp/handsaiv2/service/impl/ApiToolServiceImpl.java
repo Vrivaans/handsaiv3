@@ -175,10 +175,12 @@ public class ApiToolServiceImpl implements ApiToolService {
     @Transactional
     public void deleteApiTool(Long id) {
         log.info("Deleting API tool with id: {}", id);
-        if (!apiToolRepository.existsById(id)) {
-            throw new ResourceNotFoundException("ApiTool not found with id: " + id);
-        }
-        apiToolRepository.deleteById(id);
+        ApiTool apiTool = apiToolRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ApiTool not found with id: " + id));
+        // Clear parameters explicitly to avoid constraint violations
+        apiTool.getParameters().clear();
+        apiToolRepository.saveAndFlush(apiTool);
+        apiToolRepository.delete(apiTool);
         toolCacheManager.refreshCache();
     }
 
