@@ -52,7 +52,7 @@
               <span class="status-tag" [class.success]="tool.healthy" [class.error]="!tool.healthy">
                 {{ tool.healthy ? 'Healthy' : 'Unhealthy' }}
               </span>
-              <button type="button" class="delete-btn" (click)="deleteTool(tool.id, $event)"
+              <button type="button" class="delete-btn" (click)="deleteTool(tool.id, tool.name, $event)"
                 style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0;"
                 title="Eliminar herramienta">🗑️</button>
             </div>
@@ -64,4 +64,18 @@
       </div>
     </div>
   </main>
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal) {
+  <div class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Confirmar Eliminación</h3>
+      <p>¿Estás seguro de que deseas eliminar la herramienta <strong>{{ toolToDeleteName }}</strong>?</p>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" (click)="closeDeleteModal()">Cancelar</button>
+        <button type="button" class="btn danger" (click)="confirmDelete()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+  }
 </div>

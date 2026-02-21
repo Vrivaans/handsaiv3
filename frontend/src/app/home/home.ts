@@ -16,6 +16,9 @@ export class HomeComponent implements OnInit {
     activeTools: McpTool[] = [];
 
     error: string | null = null;
+    showDeleteModal = false;
+    toolToDelete: number | null = null;
+    toolToDeleteName: string = '';
 
     ngOnInit() {
         this.loadData();
@@ -40,13 +43,26 @@ export class HomeComponent implements OnInit {
         });
     }
 
-    deleteTool(id: number, event: Event) {
+    deleteTool(id: number, name: string, event: Event) {
         event.preventDefault();
         event.stopPropagation();
-        if (confirm('¿Estás seguro de que deseas eliminar esta herramienta?')) {
-            this.apiService.deleteApiTool(id).subscribe({
+        this.toolToDelete = id;
+        this.toolToDeleteName = name;
+        this.showDeleteModal = true;
+    }
+
+    closeDeleteModal() {
+        this.showDeleteModal = false;
+        this.toolToDelete = null;
+        this.toolToDeleteName = '';
+    }
+
+    confirmDelete() {
+        if (this.toolToDelete !== null) {
+            this.apiService.deleteApiTool(this.toolToDelete).subscribe({
                 next: () => {
                     this.loadData();
+                    this.closeDeleteModal();
                 },
                 error: (err) => console.error('Error deleting tool', err)
             });
