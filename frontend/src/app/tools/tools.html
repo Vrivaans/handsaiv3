@@ -1,0 +1,176 @@
+<div class="container">
+    <header>
+        <h1>Agregar Herramienta API</h1>
+        <p>Registra una nueva herramienta para que sea descubierta por la IA.</p>
+    </header>
+
+    <main>
+        <div class="card form-card">
+            <form [formGroup]="toolForm" (ngSubmit)="onSubmit()">
+                <div class="form-grid">
+                    <!-- Name Section -->
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input id="name" type="text" formControlName="name" placeholder="Ej. Servicio de Clima" />
+                        <div *ngIf="toolForm.get('name')?.invalid && toolForm.get('name')?.touched" class="error-msg">
+                            Este campo es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="code">Código Único</label>
+                        <input id="code" type="text" formControlName="code" placeholder="Ej. clima-api" />
+                        <div *ngIf="toolForm.get('code')?.invalid && toolForm.get('code')?.touched" class="error-msg">
+                            Este campo es obligatorio.
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="form-group full-width">
+                        <label for="description">Descripción</label>
+                        <textarea id="description" formControlName="description" rows="3"
+                            placeholder="Descripción detallada de para qué sirve esta herramienta y cuándo usarla..."></textarea>
+                        <div *ngIf="toolForm.get('description')?.invalid && toolForm.get('description')?.touched"
+                            class="error-msg">
+                            Este campo es obligatorio.
+                        </div>
+                    </div>
+
+                    <!-- URL Section -->
+                    <div class="form-group full-width">
+                        <label for="baseUrl">URL Base</label>
+                        <input id="baseUrl" type="url" formControlName="baseUrl"
+                            placeholder="Ej. https://api.weatherapi.com" />
+                        <div *ngIf="toolForm.get('baseUrl')?.invalid && toolForm.get('baseUrl')?.touched"
+                            class="error-msg">
+                            Este campo es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endpointPath">Ruta (Path)</label>
+                        <input id="endpointPath" type="text" formControlName="endpointPath"
+                            placeholder="Ej. /v1/current.json" />
+                        <div *ngIf="toolForm.get('endpointPath')?.invalid && toolForm.get('endpointPath')?.touched"
+                            class="error-msg">
+                            Este campo es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="httpMethod">Método HTTP</label>
+                        <select id="httpMethod" formControlName="httpMethod">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+
+                    <!-- Auth Settings -->
+                    <div class="form-group full-width section-title">
+                        <h3>Autenticación</h3>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="authenticationType">Tipo</label>
+                        <select id="authenticationType" formControlName="authenticationType">
+                            <option value="NONE">Sin Autenticación</option>
+                            <option value="API_KEY">API Key</option>
+                            <option value="BEARER">Bearer Token</option>
+                            <option value="BASIC">Basic Auth</option>
+                        </select>
+                    </div>
+
+                    <ng-container *ngIf="toolForm.get('authenticationType')?.value !== 'NONE'">
+                        <div class="form-group">
+                            <label for="apiKeyLocation">Ubicación (API Key)</label>
+                            <select id="apiKeyLocation" formControlName="apiKeyLocation">
+                                <option value="HEADER">Header</option>
+                                <option value="QUERY_PARAMETER">Query Parameter</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apiKeyName">Nombre de la clave</label>
+                            <input id="apiKeyName" type="text" formControlName="apiKeyName"
+                                placeholder="Ej. Authorization / x-api-key" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apiKeyValue">Valor</label>
+                            <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
+                                placeholder="Valor del token" />
+                        </div>
+                    </ng-container>
+
+                    <!-- Status -->
+                    <div class="form-group full-width checkbox-group">
+                        <input id="enabled" type="checkbox" formControlName="enabled" />
+                        <label for="enabled">Habilitar esta herramienta de inmediato</label>
+                    </div>
+
+                    <!-- Parameters Section -->
+                    <div class="form-group full-width section-title">
+                        <div class="section-header">
+                            <h3>Parámetros</h3>
+                            <button type="button" class="btn secondary" (click)="addParameter()">+ Añadir
+                                Parámetro</button>
+                        </div>
+
+                        <div formArrayName="parameters" class="parameters-list">
+                            <div *ngFor="let param of parameters.controls; let i=index" [formGroupName]="i"
+                                class="parameter-row card">
+
+                                <div class="param-fields">
+                                    <div class="form-group">
+                                        <label>Nombre del Parámetro</label>
+                                        <input type="text" formControlName="name" placeholder="Ej. q">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Tipo</label>
+                                        <select formControlName="type">
+                                            <option value="STRING">String</option>
+                                            <option value="NUMBER">Number</option>
+                                            <option value="BOOLEAN">Boolean</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group full-width">
+                                        <label>Descripción del parámetro</label>
+                                        <input type="text" formControlName="description"
+                                            placeholder="Ej. Nombre de la ciudad">
+                                    </div>
+
+                                    <div class="form-group checkbox-group pb-0">
+                                        <input type="checkbox" [id]="'required-'+i" formControlName="required" />
+                                        <label [for]="'required-'+i">Requerido</label>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn delete-btn" (click)="removeParameter(i)"
+                                    title="Eliminar parámetro">🗑️</button>
+                            </div>
+
+                            <div *ngIf="parameters.controls.length === 0" class="empty-state">
+                                <p>No se han definido parámetros adicionales para esta herramienta.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
+                    <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+
+                    <button type="button" class="btn ghost" routerLink="/home">Cancelar</button>
+                    <button type="submit" class="btn primary" [disabled]="isSubmitting || toolForm.invalid">
+                        <span *ngIf="!isSubmitting">Guardar Herramienta</span>
+                        <span *ngIf="isSubmitting">Guardando...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>

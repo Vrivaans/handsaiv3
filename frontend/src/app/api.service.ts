@@ -39,4 +39,9 @@ export class ApiService {
     getActiveTools(): Observable<McpListResponse> {
         return this.http.get<McpListResponse>('/mcp/tools/list');
     }
+
+    // Registrar nueva herramienta en BD (Admin API)
+    createApiTool(toolData: any): Observable<ApiTool> {
+        return this.http.post<ApiTool>('/admin/tools/api', toolData);
+    }
 }

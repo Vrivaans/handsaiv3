@@ -5,7 +5,7 @@ import { ApiService, ApiTool, McpTool } from '../api.service';
 @Component({
     selector: 'app-home',
     standalone: true,
-    imports: [CommonModule, AsyncPipe],
+    imports: [CommonModule],
     templateUrl: './home.html',
     styleUrl: '../app.scss'
 })

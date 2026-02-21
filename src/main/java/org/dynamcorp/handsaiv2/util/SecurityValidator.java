@@ -25,13 +25,20 @@ public class SecurityValidator {
 
     public void validateUrl(String urlString) {
         try {
+            if (urlString == null || urlString.isBlank()) {
+                throw new IllegalArgumentException("Invalid URL: URL cannot be empty");
+            }
+            if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
+                throw new IllegalArgumentException(
+                        "Invalid URL: Protocol (http/https) is missing. Make sure to use http:// or https://");
+            }
+
             URI uri = new URI(urlString);
             String host = uri.getHost();
 
             if (host == null) {
                 throw new IllegalArgumentException("Invalid URL: Host is missing");
             }
-
             // Always block cloud metadata services
             if (BLOCKED_HOSTS.contains(host)) {
                 throw new SecurityException("Access to restricted host is denied: " + host);
