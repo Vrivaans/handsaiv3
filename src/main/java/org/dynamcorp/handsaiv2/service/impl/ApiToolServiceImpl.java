@@ -93,6 +93,28 @@ public class ApiToolServiceImpl implements ApiToolService {
 
     @Override
     @Transactional
+    public List<ApiToolResponse> createApiToolsBatch(List<CreateApiToolRequest> requests) {
+        log.info("Batch creating {} API tools", requests.size());
+
+        // We can just reuse createApiTool since it handles SSRF validation, encryption
+        // and UUID generation.
+        // The @Transactional annotation here ensures they either all succeed or all
+        // fail.
+        List<ApiToolResponse> responses = requests.stream()
+                .map(request -> {
+                    // Try to generate a unique code if it already exists to avoid halting the whole
+                    // batch
+                    // Or we let it fail if the user explicitly provided a duplicate code.
+                    // For now, we'll let it execute and throw if duplicated, to enforce clean data.
+                    return createApiTool(request);
+                })
+                .collect(Collectors.toList());
+
+        return responses;
+    }
+
+    @Override
+    @Transactional
     public ApiToolResponse updateApiTool(Long id, UpdateApiToolRequest request) {
         log.info("Updating API tool with id: {}", id);
 

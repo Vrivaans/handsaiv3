@@ -34,6 +34,13 @@ public class AdminToolController {
         return new ApiResponse(HttpStatus.OK.value(), "Tool creada correctamente");
     }
 
+    @PostMapping("/api/batch")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse createApiToolsBatch(@RequestBody List<CreateApiToolRequest> requests) {
+        apiToolService.createApiToolsBatch(requests);
+        return new ApiResponse(HttpStatus.OK.value(), requests.size() + " tools creadas correctamente");
+    }
+
     @PutMapping("/api/{id}")
     public ApiToolResponse updateApiTool(
             @PathVariable Long id,

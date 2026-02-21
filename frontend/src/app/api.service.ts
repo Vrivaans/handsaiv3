@@ -74,8 +74,12 @@ export class ApiService {
     }
 
     // Registrar nueva herramienta en BD (Admin API)
-    createApiTool(toolData: any): Observable<ApiTool> {
-        return this.http.post<ApiTool>('/admin/tools/api', toolData);
+    createApiTool(tool: ApiTool): Observable<ApiTool> {
+        return this.http.post<ApiTool>('/admin/tools/api', tool);
+    }
+
+    createApiToolsBatch(tools: ApiTool[]): Observable<any> {
+        return this.http.post<any>('/admin/tools/api/batch', tools);
     }
 
     // Eliminar herramienta en BD (Admin API)

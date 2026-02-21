@@ -1,10 +1,16 @@
 <div class="container">
     <header>
-        <h1>Agregar Herramienta API</h1>
-        <p>Registra una nueva herramienta para que sea descubierta por la IA.</p>
+        <h1>Agregar Herramientas API</h1>
+        <p>Registra herramientas para que sean descubiertas por la IA.</p>
     </header>
 
     <main>
+        <div class="tabs">
+            <a routerLink="/tools" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+                class="tab active">Una a la vez</a>
+            <a routerLink="/tools/batch" class="tab">Múltiples / Importar</a>
+        </div>
+
         <div class="card form-card">
             <form [formGroup]="toolForm" (ngSubmit)="onSubmit()">
                 <div class="form-grid">

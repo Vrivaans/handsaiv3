@@ -11,6 +11,8 @@ public interface ApiToolService {
 
     ApiToolResponse createApiTool(CreateApiToolRequest request);
 
+    List<ApiToolResponse> createApiToolsBatch(List<CreateApiToolRequest> requests);
+
     ApiToolResponse updateApiTool(Long id, UpdateApiToolRequest request);
 
     ApiToolResponse getApiTool(Long id);

@@ -1,0 +1,156 @@
+<div class="container">
+    <header>
+        <h1>Creación Múltiple / Importador</h1>
+        <p>Define una configuración base y añade múltiples endpoints manualmente o importando un OpenAPI/Swagger.</p>
+    </header>
+
+    <main>
+        <div class="tabs">
+            <a routerLink="/tools" class="tab">Una a la vez</a>
+            <a routerLink="/tools/batch" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+                class="tab active">Múltiples / Importar</a>
+        </div>
+
+        <div class="card form-card">
+            <form [formGroup]="batchForm" (ngSubmit)="onSubmit()">
+
+                <!-- OpenAPI Importer Section -->
+                <div class="form-group full-width import-section">
+                    <label for="openapi-json">Importador Rápido (Opcional)</label>
+                    <p class="helper-text">Pega un JSON válido de OpenAPI 3.x o Swagger 2.0 y procesaremos
+                        automáticamente las rutas y parámetros.</p>
+                    <textarea id="openapi-json" [(ngModel)]="openApiJsonText" [ngModelOptions]="{standalone: true}"
+                        rows="4" placeholder='{ "openapi": "3.0.0", "paths": { ... } }'></textarea>
+                    <button type="button" class="btn secondary" (click)="importOpenApi()" style="margin-top: 0.5rem;">
+                        Procesar JSON
+                    </button>
+                    <div *ngIf="importError" class="error-msg">{{ importError }}</div>
+                    <div *ngIf="importSuccessMessage" class="success-msg">{{ importSuccessMessage }}</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group full-width section-title">
+                        <h3>1. Configuración Base (Común para todos)</h3>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="baseUrl">URL Base</label>
+                        <input id="baseUrl" type="url" formControlName="baseUrl"
+                            placeholder="Ej. https://api.weatherapi.com" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="authenticationType">Tipo de Autenticación</label>
+                        <select id="authenticationType" formControlName="authenticationType">
+                            <option value="NONE">Sin Autenticación</option>
+                            <option value="API_KEY">API Key</option>
+                            <option value="BEARER">Bearer Token</option>
+                            <option value="BASIC">Basic Auth</option>
+                        </select>
+                    </div>
+
+                    <ng-container *ngIf="batchForm.get('authenticationType')?.value !== 'NONE'">
+                        <div class="form-group">
+                            <label for="apiKeyLocation">Ubicación (API Key)</label>
+                            <select id="apiKeyLocation" formControlName="apiKeyLocation">
+                                <option value="HEADER">Header</option>
+                                <option value="QUERY_PARAMETER">Query Parameter</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apiKeyName">Nombre de la clave</label>
+                            <input id="apiKeyName" type="text" formControlName="apiKeyName"
+                                placeholder="Ej. Authorization / x-api-key" />
+                        </div>
+                        <div class="form-group">
+                            <label for="apiKeyValue">Valor (Secreto)</label>
+                            <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
+                                placeholder="Valor del token" />
+                        </div>
+                    </ng-container>
+
+                    <!-- Endpoints Section -->
+                    <div class="form-group full-width section-title">
+                        <div class="section-header">
+                            <h3>2. Endpoints a Crear ({{ endpoints.length }})</h3>
+                            <button type="button" class="btn secondary" (click)="addEndpoint()">+ Añadir
+                                Manualmente</button>
+                        </div>
+                    </div>
+
+                    <div formArrayName="endpoints" class="full-width endpoints-list">
+                        <div *ngFor="let ep of endpoints.controls; let i=index" [formGroupName]="i"
+                            class="endpoint-card">
+                            <div class="endpoint-header">
+                                <span class="method-badge" [ngClass]="ep.get('httpMethod')?.value">{{
+                                    ep.get('httpMethod')?.value }}</span>
+                                <input type="text" formControlName="endpointPath" class="inline-input path-input"
+                                    placeholder="Path ej. /v1/current.json">
+                                <button type="button" class="btn delete-btn" (click)="removeEndpoint(i)"
+                                    title="Eliminar endpoint">🗑️</button>
+                            </div>
+
+                            <div class="endpoint-body">
+                                <div class="form-group">
+                                    <label>Nombre de la herramienta</label>
+                                    <input type="text" formControlName="name" placeholder="Ej. Obtener Clima Actual">
+                                </div>
+                                <div class="form-group">
+                                    <label>Código Único</label>
+                                    <input type="text" formControlName="code" placeholder="Ej. get-current-weather">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Descripción detallada</label>
+                                    <textarea formControlName="description" rows="2"
+                                        placeholder="Describe para qué sirve..."></textarea>
+                                </div>
+
+                                <!-- Endpoint Parameters -->
+                                <div class="parameters-mini-list full-width">
+                                    <div class="section-header-mini">
+                                        <label>Parámetros ({{ getParameters(i).length }})</label>
+                                        <button type="button" class="btn small" (click)="addParameter(i)">+
+                                            Param</button>
+                                    </div>
+                                    <div formArrayName="parameters">
+                                        <div *ngFor="let param of getParameters(i).controls; let j=index"
+                                            [formGroupName]="j" class="param-row-mini">
+                                            <input type="text" formControlName="name" placeholder="Nombre (ej. q)"
+                                                class="param-name">
+                                            <select formControlName="type" class="param-type">
+                                                <option value="STRING">String</option>
+                                                <option value="NUMBER">Number</option>
+                                                <option value="BOOLEAN">Boolean</option>
+                                            </select>
+                                            <label class="param-req"><input type="checkbox" formControlName="required">
+                                                Req.</label>
+                                            <button type="button" class="btn-text-danger"
+                                                (click)="removeParameter(i, j)">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="endpoints.controls.length === 0" class="empty-state">
+                            <p>No hay endpoints definidos. Importa un JSON de OpenAPI arriba o añade uno manualmente.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="form-actions">
+                    <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
+                    <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+
+                    <button type="button" class="btn ghost" routerLink="/home">Cancelar</button>
+                    <button type="submit" class="btn primary" [disabled]="isSubmitting || endpoints.length === 0">
+                        <span *ngIf="!isSubmitting">Guardar Todo</span>
+                        <span *ngIf="isSubmitting">Guardando Batch...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
