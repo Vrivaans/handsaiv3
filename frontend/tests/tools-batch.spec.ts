@@ -46,14 +46,14 @@ test.describe('Tools Batch Operations & OpenAPI Importer', () => {
 
         // Verify the details of the first generated endpoint (GET /users)
         await expect(endpointCards.nth(0).locator('.path-input')).toHaveValue('/users');
-        await expect(endpointCards.nth(0).locator('.method-badge')).toHaveText('GET');
+        await expect(endpointCards.nth(0).locator('.method-badge')).toHaveValue('GET');
         await expect(endpointCards.nth(0).locator('input[formControlName="name"]').first()).toHaveValue('Get Users');
         await expect(endpointCards.nth(0).locator('input[formControlName="code"]')).toHaveValue('getusers');
         await expect(endpointCards.nth(0).locator('input.param-name').first()).toHaveValue('limit');
 
         // Verify the details of the second generated endpoint (POST /users)
         await expect(endpointCards.nth(1).locator('.path-input')).toHaveValue('/users');
-        await expect(endpointCards.nth(1).locator('.method-badge')).toHaveText('POST');
+        await expect(endpointCards.nth(1).locator('.method-badge')).toHaveValue('POST');
         await expect(endpointCards.nth(1).locator('input.param-name').first()).toHaveValue('body');
     });
 

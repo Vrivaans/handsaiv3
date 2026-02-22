@@ -138,12 +138,20 @@
         gap: 1rem;
 
         .method-badge {
+            font-family: inherit;
             font-size: 0.75rem;
             font-weight: 700;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
             background: #334155;
             color: #fff;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            text-align: center;
 
             &.GET {
                 background: #3b82f6;
