@@ -30,7 +30,18 @@
 
                 <div class="form-grid">
                     <div class="form-group full-width section-title">
-                        <h3>1. Configuración Base (Común para todos)</h3>
+                        <h3>1. Configuración del Proveedor (Base)</h3>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="providerName">Nombre del Proveedor (Ej. OpenWeatherMap)</label>
+                        <input id="providerName" type="text" formControlName="providerName"
+                            placeholder="Ej. OpenWeatherMap API" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="providerCode">Código Único (Opcional)</label>
+                        <input id="providerCode" type="text" formControlName="providerCode" placeholder="Ej. owm-api" />
                     </div>
 
                     <div class="form-group full-width">
@@ -102,8 +113,8 @@
                                     <input type="text" formControlName="name" placeholder="Ej. Obtener Clima Actual">
                                 </div>
                                 <div class="form-group">
-                                    <label>Código Único</label>
-                                    <input type="text" formControlName="code" placeholder="Ej. get-current-weather">
+                                    <label>Código Único (Opcional)</label>
+                                    <input type="text" formControlName="code" placeholder="Ej. get-weather-current">
                                 </div>
                                 <div class="form-group full-width">
                                     <label>Descripción detallada</label>

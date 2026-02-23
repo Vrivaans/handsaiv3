@@ -15,7 +15,7 @@ public class ToolValidationService {
 
     public boolean validateApiToolHealth(ApiTool apiTool) {
         try {
-            String url = apiTool.getBaseUrl();
+            String url = apiTool.getProvider().getBaseUrl();
 
             // Simple ping check to validate if the API is accessible
             RestClient restClient = restClientBuilder.baseUrl(url).build();

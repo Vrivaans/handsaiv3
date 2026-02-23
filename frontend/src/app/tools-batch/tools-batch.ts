@@ -23,6 +23,8 @@ export class ToolsBatchComponent {
 
   constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router) {
     this.batchForm = this.fb.group({
+      providerName: ['', Validators.required],
+      providerCode: [''], // Optional
       baseUrl: ['', Validators.required],
       authenticationType: ['NONE', Validators.required],
       apiKeyLocation: ['HEADER'],
@@ -44,7 +46,7 @@ export class ToolsBatchComponent {
   addEndpoint(data?: any) {
     const endpointForm = this.fb.group({
       name: [data?.name || '', Validators.required],
-      code: [data?.code || '', Validators.required],
+      code: [data?.code || ''],
       description: [data?.description || '', Validators.required],
       endpointPath: [data?.endpointPath || '', Validators.required],
       httpMethod: [data?.httpMethod || 'GET', Validators.required],
@@ -101,6 +103,13 @@ export class ToolsBatchComponent {
       // Try extracting base URL if present
       if (spec.servers && spec.servers.length > 0) {
         this.batchForm.patchValue({ baseUrl: spec.servers[0].url });
+      }
+
+      if (spec.info && spec.info.title) {
+        this.batchForm.patchValue({ providerName: spec.info.title });
+        this.batchForm.patchValue({ providerCode: spec.info.title.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase() });
+      } else {
+        this.batchForm.patchValue({ providerName: 'Imported API - ' + new Date().toLocaleDateString() });
       }
 
       if (!spec.paths) {
@@ -186,41 +195,61 @@ export class ToolsBatchComponent {
     this.errorMessage = '';
 
     const formValue = this.batchForm.value;
-    const apiToolsToCreate: any[] = [];
 
-    // Distribute the base config to each endpoint
-    formValue.endpoints.forEach((ep: any) => {
-      apiToolsToCreate.push({
-        ...ep,
-        baseUrl: formValue.baseUrl,
-        authenticationType: formValue.authenticationType,
-        apiKeyLocation: formValue.apiKeyLocation,
-        apiKeyName: formValue.apiKeyName,
-        apiKeyValue: formValue.apiKeyValue,
-        enabled: true
-      });
-    });
+    const providerPayload = {
+      name: formValue.providerName,
+      code: formValue.providerCode,
+      baseUrl: formValue.baseUrl,
+      authenticationType: formValue.authenticationType,
+      apiKeyLocation: formValue.apiKeyLocation,
+      apiKeyName: formValue.apiKeyName,
+      apiKeyValue: formValue.apiKeyValue
+    };
 
-    this.apiService.createApiToolsBatch(apiToolsToCreate).subscribe({
-      next: (response) => {
-        this.isSubmitting = false;
-        this.successMessage = `¡Lote guardado! Se crearon ${apiToolsToCreate.length} herramientas con éxito.`;
+    this.apiService.createApiProvider(providerPayload).subscribe({
+      next: (providerResponse) => {
+        const providerId = providerResponse.id;
 
-        // Clear the form
-        this.batchForm.reset({ authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
-        while (this.endpoints.length !== 0) {
-          this.endpoints.removeAt(0);
-        }
-        setTimeout(() => this.router.navigate(['/home']), 1500);
+        const apiToolsToCreate: any[] = [];
+        formValue.endpoints.forEach((ep: any) => {
+          apiToolsToCreate.push({
+            ...ep,
+            providerId: providerId,
+            enabled: true
+          });
+        });
+
+        this.apiService.createApiToolsBatch(apiToolsToCreate).subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            this.successMessage = `¡Éxito! Se creó el proveedor y ${apiToolsToCreate.length} herramientas asociadas.`;
+
+            // Clear the form
+            this.batchForm.reset({ authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
+            while (this.endpoints.length !== 0) {
+              this.endpoints.removeAt(0);
+            }
+            setTimeout(() => this.router.navigate(['/home']), 1500);
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            if (error.error && error.error.message) {
+              this.errorMessage = error.error.message;
+            } else {
+              this.errorMessage = 'Hubo un error al guardar el lote de herramientas.';
+            }
+            console.error('Error batch creating tools', error);
+          }
+        });
       },
       error: (error) => {
         this.isSubmitting = false;
         if (error.error && error.error.message) {
           this.errorMessage = error.error.message;
         } else {
-          this.errorMessage = 'Hubo un error al guardar el lote de herramientas.';
+          this.errorMessage = 'Hubo un error al crear el proveedor base.';
         }
-        console.error('Error batch creating tools', error);
+        console.error('Error creating provider', error);
       }
     });
   }

@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class ApiToolServiceImpl implements ApiToolService {
 
     private final ApiToolRepository apiToolRepository;
+    private final org.dynamcorp.handsaiv2.repository.ApiProviderRepository apiProviderRepository;
     private final ToolValidationService toolValidationService;
     private final ToolCacheManager toolCacheManager;
     private final EncryptionService encryptionService;
@@ -38,26 +39,27 @@ public class ApiToolServiceImpl implements ApiToolService {
     public ApiToolResponse createApiTool(CreateApiToolRequest request) {
         log.info("Creating new API tool: {}", request.name());
 
-        // Validate URL for SSRF
-        securityValidator.validateUrl(request.baseUrl());
+        String toolCode = (request.code() != null && !request.code().isBlank()) ? request.code()
+                : java.util.UUID.randomUUID().toString();
 
-        if (apiToolRepository.existsByCode(request.code())) {
-            throw new IllegalArgumentException("Tool with code " + request.code() + " already exists");
+        if (apiToolRepository.existsByCode(toolCode)) {
+            throw new IllegalArgumentException("Tool with code " + toolCode + " already exists");
         }
+
+        org.dynamcorp.handsaiv2.model.ApiProvider provider = apiProviderRepository.findById(request.providerId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Provider not found with id: " + request.providerId()));
 
         ApiTool apiTool = ApiTool.builder()
                 .name(request.name())
-                .code(request.code())
+                .code(toolCode)
                 .description(request.description())
-                .baseUrl(request.baseUrl())
+                .provider(provider)
                 .endpointPath(request.endpointPath())
                 .httpMethod(request.httpMethod())
-                .authenticationType(request.authenticationType())
-                .apiKeyLocation(request.apiKeyLocation())
-                .apiKeyName(request.apiKeyName())
-                .apiKeyValue(encryptionService.encrypt(request.apiKeyValue()))
                 .enabled(request.enabled() != null ? request.enabled() : true)
-                .healthy(false) // Initially false until validated
+                .healthy(request.enabled() != null ? request.enabled() : true) // Initially set to enabled status if
+                                                                               // requested
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -121,10 +123,11 @@ public class ApiToolServiceImpl implements ApiToolService {
         ApiTool apiTool = apiToolRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ApiTool not found with id: " + id));
 
-        // Validate URL for SSRF if changed
-        if (request.baseUrl() != null) {
-            securityValidator.validateUrl(request.baseUrl());
-            apiTool.setBaseUrl(request.baseUrl());
+        if (request.providerId() != null) {
+            org.dynamcorp.handsaiv2.model.ApiProvider provider = apiProviderRepository.findById(request.providerId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Provider not found with id: " + request.providerId()));
+            apiTool.setProvider(provider);
         }
 
         if (request.name() != null)
@@ -135,15 +138,6 @@ public class ApiToolServiceImpl implements ApiToolService {
             apiTool.setEndpointPath(request.endpointPath());
         if (request.httpMethod() != null)
             apiTool.setHttpMethod(request.httpMethod());
-        if (request.authenticationType() != null)
-            apiTool.setAuthenticationType(request.authenticationType());
-        if (request.apiKeyLocation() != null)
-            apiTool.setApiKeyLocation(request.apiKeyLocation());
-        if (request.apiKeyName() != null)
-            apiTool.setApiKeyName(request.apiKeyName());
-        if (request.apiKeyValue() != null) {
-            apiTool.setApiKeyValue(encryptionService.encrypt(request.apiKeyValue()));
-        }
 
         apiTool.setEnabled(request.enabled());
         apiTool.setUpdatedAt(Instant.now());

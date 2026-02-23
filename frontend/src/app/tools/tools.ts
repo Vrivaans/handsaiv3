@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { ApiService } from '../api.service';
 import { Router, RouterModule } from '@angular/router';
+import { OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-tools',
@@ -11,26 +12,40 @@ import { Router, RouterModule } from '@angular/router';
     templateUrl: './tools.html',
     styleUrl: './tools.scss'
 })
-export class ToolsComponent {
+export class ToolsComponent implements OnInit {
     toolForm: FormGroup;
     isSubmitting = false;
     successMessage = '';
     errorMessage = '';
+    providers: any[] = [];
 
     constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router) {
         this.toolForm = this.fb.group({
             name: ['', Validators.required],
-            code: ['', Validators.required],
+            code: [''],
             enabled: [true],
             description: ['', Validators.required],
-            baseUrl: ['', Validators.required],
-            endpointPath: ['', Validators.required],
-            httpMethod: ['GET', Validators.required],
-            authenticationType: ['NONE', Validators.required],
+            providerId: [''],
+
+            isCreatingProvider: [false],
+            providerName: [''],
+            providerCode: [''],
+            baseUrl: [''],
+            authenticationType: ['NONE'],
             apiKeyLocation: ['HEADER'],
             apiKeyName: [''],
             apiKeyValue: [''],
+
+            endpointPath: ['', Validators.required],
+            httpMethod: ['GET', Validators.required],
             parameters: this.fb.array([])
+        });
+    }
+
+    ngOnInit(): void {
+        this.apiService.getApiProviders().subscribe({
+            next: (data) => this.providers = data,
+            error: (err) => console.error('Error fetching providers', err)
         });
     }
 
@@ -59,18 +74,63 @@ export class ToolsComponent {
             return;
         }
 
+        const formValue = this.toolForm.value;
+
+        if (formValue.isCreatingProvider) {
+            if (!formValue.providerName || !formValue.baseUrl) {
+                this.errorMessage = 'Debe indicar el nombre y la URL base del nuevo proveedor.';
+                return;
+            }
+        } else {
+            if (!formValue.providerId) {
+                this.errorMessage = 'Debe seleccionar un proveedor o crear uno nuevo.';
+                return;
+            }
+        }
+
         this.isSubmitting = true;
         this.successMessage = '';
         this.errorMessage = '';
 
-        const formValue = this.toolForm.value;
+        if (formValue.isCreatingProvider) {
+            const providerPayload = {
+                name: formValue.providerName,
+                code: formValue.providerCode,
+                baseUrl: formValue.baseUrl,
+                authenticationType: formValue.authenticationType,
+                apiKeyLocation: formValue.apiKeyLocation,
+                apiKeyName: formValue.apiKeyName,
+                apiKeyValue: formValue.apiKeyValue
+            };
 
-        this.apiService.createApiTool(formValue).subscribe({
+            this.apiService.createApiProvider(providerPayload).subscribe({
+                next: (providerResponse) => {
+                    this.saveTool(providerResponse.id, formValue);
+                },
+                error: (err) => {
+                    this.isSubmitting = false;
+                    this.errorMessage = 'Hubo un error al crear el proveedor.';
+                    console.error('Provider creation error', err);
+                }
+            });
+        } else {
+            this.saveTool(formValue.providerId, formValue);
+        }
+    }
+
+    private saveTool(providerId: number, formValue: any) {
+        const toolPayload = {
+            ...formValue,
+            providerId: providerId
+        };
+
+        this.apiService.createApiTool(toolPayload).subscribe({
             next: (response) => {
                 this.isSubmitting = false;
                 this.successMessage = 'Herramienta guardada con éxito.';
-                this.toolForm.reset({ enabled: true, httpMethod: 'GET', authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
+                this.toolForm.reset({ enabled: true, httpMethod: 'GET', isCreatingProvider: false, authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
                 this.parameters.clear();
+                this.ngOnInit(); // refresh providers
                 setTimeout(() => this.router.navigate(['/home']), 1500);
             },
             error: (error) => {

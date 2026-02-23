@@ -7,15 +7,11 @@ import org.dynamcorp.handsaiv2.model.HttpMethodEnum;
 import java.util.List;
 
 public record UpdateApiToolRequest(
-    String name,
-    String description,
-    String baseUrl,
-    String endpointPath,
-    HttpMethodEnum httpMethod,
-    boolean enabled,
-    AuthenticationTypeEnum authenticationType,
-    ApiKeyLocationEnum apiKeyLocation,
-    String apiKeyName,
-    String apiKeyValue,
-    List<ToolParameterRequest> parameters
-) {}
+        String name,
+        String description,
+        Long providerId,
+        String endpointPath,
+        HttpMethodEnum httpMethod,
+        boolean enabled,
+        List<ToolParameterRequest> parameters) {
+}

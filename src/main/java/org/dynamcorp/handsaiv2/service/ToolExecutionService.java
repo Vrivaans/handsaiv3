@@ -26,7 +26,7 @@ public class ToolExecutionService {
 
     private final ApiToolService apiToolService;
     private final ToolCacheManager toolCacheManager;
-    private final ToolExecutionLogRepository logRepository;
+    private final LogBatchProcessor logBatchProcessor;
     private final RestClient.Builder restClientBuilder;
     private final ObjectMapper objectMapper;
     private final EncryptionService encryptionService;
@@ -74,8 +74,8 @@ public class ToolExecutionService {
             executionLog.setExecutionTimeMs(executionTime);
             executionLog.setExecutedAt(Instant.now());
 
-            // Guardar el log de ejecución
-            logRepository.save(executionLog);
+            // Encolar el log de ejecución para proceso por lotes
+            logBatchProcessor.enqueueLog(executionLog);
 
             log.info("Tool execution successful: {} in {}ms", request.toolName(), executionTime);
 
@@ -97,7 +97,7 @@ public class ToolExecutionService {
                     Duration.between(startTime, Instant.now()).toMillis());
 
             try {
-                logRepository.save(executionLog);
+                logBatchProcessor.enqueueLog(executionLog);
             } catch (Exception logError) {
                 log.error("Failed to save execution log: {}", logError.getMessage());
             }
@@ -112,7 +112,7 @@ public class ToolExecutionService {
     }
 
     private Object executeApiCall(ApiTool apiTool, Map<String, Object> parameters) {
-        RestClient client = restClientBuilder.baseUrl(apiTool.getBaseUrl()).build();
+        RestClient client = restClientBuilder.baseUrl(apiTool.getProvider().getBaseUrl()).build();
 
         // Preparar parámetros incluyendo autenticación
         Map<String, Object> finalParameters = prepareParametersWithAuth(apiTool, parameters);
@@ -162,12 +162,13 @@ public class ToolExecutionService {
         Map<String, Object> parameters = new java.util.HashMap<>(originalParameters);
 
         // Añadir API key como parámetro si la localización es QUERY_PARAM
-        if (apiTool.getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
-                apiTool.getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
-                apiTool.getApiKeyName() != null &&
-                apiTool.getApiKeyValue() != null) {
+        if (apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
+                apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
+                apiTool.getProvider().getApiKeyName() != null &&
+                apiTool.getProvider().getApiKeyValue() != null) {
 
-            parameters.put(apiTool.getApiKeyName(), encryptionService.decrypt(apiTool.getApiKeyValue()));
+            parameters.put(apiTool.getProvider().getApiKeyName(),
+                    encryptionService.decrypt(apiTool.getProvider().getApiKeyValue()));
         }
 
         return parameters;
@@ -204,17 +205,19 @@ public class ToolExecutionService {
     }
 
     private void configureAuthentication(RestClient.RequestBodySpec requestSpec, ApiTool apiTool) {
-        if (apiTool.getAuthenticationType() == null || apiTool.getApiKeyValue() == null) {
+        if (apiTool.getProvider().getAuthenticationType() == null || apiTool.getProvider().getApiKeyValue() == null) {
             return;
         }
 
-        switch (apiTool.getAuthenticationType()) {
+        switch (apiTool.getProvider().getAuthenticationType()) {
             case API_KEY:
-                String apiKey = encryptionService.decrypt(apiTool.getApiKeyValue());
-                if (apiTool.getApiKeyLocation() == ApiKeyLocationEnum.HEADER) {
-                    String headerName = apiTool.getApiKeyName() != null ? apiTool.getApiKeyName() : "X-API-Key";
+                String apiKey = encryptionService.decrypt(apiTool.getProvider().getApiKeyValue());
+                if (apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.HEADER) {
+                    String headerName = apiTool.getProvider().getApiKeyName() != null
+                            ? apiTool.getProvider().getApiKeyName()
+                            : "X-API-Key";
                     requestSpec.header(headerName, apiKey);
-                } else if (apiTool.getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER) {
+                } else if (apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER) {
                     // Para query param, necesitaríamos reconstruir la URI.
                     // Por simplicidad y limitación de RestClient.RequestBodySpec,
                     // asumimos que la mayoría usa Header.
@@ -224,16 +227,17 @@ public class ToolExecutionService {
                 break;
 
             case BEARER_TOKEN:
-                String token = encryptionService.decrypt(apiTool.getApiKeyValue());
+                String token = encryptionService.decrypt(apiTool.getProvider().getApiKeyValue());
                 requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
                 break;
 
             case BASIC_AUTH:
-                requestSpec.header("Authorization", "Basic " + encryptionService.decrypt(apiTool.getApiKeyValue()));
+                requestSpec.header("Authorization",
+                        "Basic " + encryptionService.decrypt(apiTool.getProvider().getApiKeyValue()));
                 break;
 
             default:
-                log.warn("Unsupported authentication type: {}", apiTool.getAuthenticationType());
+                log.warn("Unsupported authentication type: {}", apiTool.getProvider().getAuthenticationType());
                 break;
         }
     }
@@ -242,14 +246,14 @@ public class ToolExecutionService {
         Map<String, Object> bodyParams = new java.util.HashMap<>(parameters);
 
         // Remover parámetros de query si están en el body
-        if (apiTool.getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
-                apiTool.getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
-                apiTool.getApiKeyName() != null) {
+        if (apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
+                apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
+                apiTool.getProvider().getApiKeyName() != null) {
 
             // Para POST/PUT/PATCH, remover la API key del body si está configurada como
             // query param
             // ya que se maneja en la URL
-            bodyParams.remove(apiTool.getApiKeyName());
+            bodyParams.remove(apiTool.getProvider().getApiKeyName());
         }
 
         return bodyParams;

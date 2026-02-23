@@ -16,7 +16,7 @@ HandsAI es un microservicio construido con Spring Boot 3.2+ y Java 21 que permit
 
 - **Framework**: Spring Boot 3.5.4 (Spring MVC)
 - **Java**: Java 21 LTS con Virtual Threads habilitados
-- **Base de Datos**: PostgreSQL con Spring Data JPA
+- **Base de Datos**: SQLite (Zero configuration) con Spring Data JPA
 - **Seguridad**: Spring Security con API Keys
 - **Build**: Maven
 - **Adicionales**: Lombok, Spring DevTools
@@ -24,22 +24,14 @@ HandsAI es un microservicio construido con Spring Boot 3.2+ y Java 21 que permit
 ## 📋 Requisitos Previos
 
 - Java 21 LTS
-- PostgreSQL 14+
 - Maven 3.8+
 
 ## ⚡ Configuración y Arranque
 
 1.  **Clonar el repositorio**
 
-2.  **Configurar la base de datos**
-    Abre el archivo `src/main/resources/application.properties` y ajusta las propiedades de conexión a tu base de datos PostgreSQL:
-
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/handsai_db
-    spring.datasource.username=tu_usuario
-    spring.datasource.password=tu_contraseña
-    spring.jpa.hibernate.ddl-auto=update
-    ```
+2.  **Base de Datos automática**
+    HandsAI v3 utiliza **SQLite** por defecto. No necesitas instalar ni levantar ningún servicio de base de datos adicional. Al iniciar, la aplicación creará automáticamente un archivo `handsai.db` en la raíz del proyecto configurado para soportar concurrencia intensiva (WAL Mode y Batch Processing).
 
 3.  **Construir y ejecutar la aplicación**
     Puedes ejecutar la aplicación usando el wrapper de Maven:

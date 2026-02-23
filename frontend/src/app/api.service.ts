@@ -82,6 +82,14 @@ export class ApiService {
         return this.http.post<any>('/admin/tools/api/batch', tools);
     }
 
+    createApiProvider(provider: any): Observable<any> {
+        return this.http.post<any>('/admin/providers', provider);
+    }
+
+    getApiProviders(): Observable<any[]> {
+        return this.http.get<any[]>('/admin/providers');
+    }
+
     // Eliminar herramienta en BD (Admin API)
     deleteApiTool(id: number): Observable<void> {
         return this.http.delete<void>(`/admin/tools/api/${id}`);

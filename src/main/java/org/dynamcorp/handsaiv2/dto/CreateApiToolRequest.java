@@ -8,23 +8,16 @@ import java.util.List;
 
 /**
  * DTO for creating a new API tool.
- * The API key value is optional and can be provided at runtime during execution if not set here.
+ * The API key value is optional and can be provided at runtime during execution
+ * if not set here.
  */
 public record CreateApiToolRequest(
-    String name,
-    String code,
-    Boolean enabled,
-    String description,
-    String baseUrl,
-    String endpointPath,
-    HttpMethodEnum httpMethod,
-    AuthenticationTypeEnum authenticationType,
-    ApiKeyLocationEnum apiKeyLocation,
-    String apiKeyName,
-    /**
-     * Optional. The API key or token to be stored for the tool.
-     * If null, the key must be provided at execution time.
-     */
-    String apiKeyValue,
-    List<ToolParameterRequest> parameters
-) {}
+        String name,
+        String code,
+        Boolean enabled,
+        String description,
+        Long providerId,
+        String endpointPath,
+        HttpMethodEnum httpMethod,
+        List<ToolParameterRequest> parameters) {
+}

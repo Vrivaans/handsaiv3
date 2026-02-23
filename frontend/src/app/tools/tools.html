@@ -24,11 +24,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="code">Código Único</label>
+                        <label for="code">Código Único (Opcional)</label>
                         <input id="code" type="text" formControlName="code" placeholder="Ej. clima-api" />
-                        <div *ngIf="toolForm.get('code')?.invalid && toolForm.get('code')?.touched" class="error-msg">
-                            Este campo es obligatorio.
-                        </div>
                     </div>
 
                     <!-- Description Section -->
@@ -42,16 +39,96 @@
                         </div>
                     </div>
 
-                    <!-- URL Section -->
-                    <div class="form-group full-width">
-                        <label for="baseUrl">URL Base</label>
-                        <input id="baseUrl" type="url" formControlName="baseUrl"
-                            placeholder="Ej. https://api.weatherapi.com" />
-                        <div *ngIf="toolForm.get('baseUrl')?.invalid && toolForm.get('baseUrl')?.touched"
-                            class="error-msg">
-                            Este campo es obligatorio.
+                    <!-- Provider Section -->
+                    <div class="form-group full-width section-title"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                        <h3 style="margin: 0;">Proveedor API</h3>
+                        <div class="checkbox-group inline" style="margin: 0;">
+                            <input id="isCreatingProvider" type="checkbox" formControlName="isCreatingProvider" />
+                            <label for="isCreatingProvider"
+                                style="font-weight: normal; margin-left: 0.5rem; cursor: pointer;">Crear nuevo
+                                proveedor</label>
                         </div>
                     </div>
+
+                    <ng-container *ngIf="!toolForm.get('isCreatingProvider')?.value">
+                        <div class="form-group full-width">
+                            <label for="providerId">Seleccionar Proveedor</label>
+                            <select id="providerId" formControlName="providerId">
+                                <option value="">-- Elige un Proveedor --</option>
+                                <option *ngFor="let p of providers" [value]="p.id">{{ p.name }} ({{ p.baseUrl }})
+                                </option>
+                            </select>
+                            <p class="helper-text" *ngIf="providers.length === 0"
+                                style="color: #ffaa00; margin-top: 0.5rem;">
+                                No hay proveedores creados. Marca la casilla de arriba para crear uno nuevo.
+                            </p>
+                            <div *ngIf="toolForm.get('providerId')?.invalid && toolForm.get('providerId')?.touched"
+                                class="error-msg">
+                                Debe seleccionar un proveedor o crear uno nuevo.
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="toolForm.get('isCreatingProvider')?.value">
+                        <div class="form-group full-width"
+                            style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="providerName">Nombre del Proveedor</label>
+                                    <input id="providerName" type="text" formControlName="providerName"
+                                        placeholder="Ej. Stripe API" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="providerCode">Código Único (Opcional)</label>
+                                    <input id="providerCode" type="text" formControlName="providerCode"
+                                        placeholder="Ej. stripe-api" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="baseUrl">URL Base</label>
+                                    <input id="baseUrl" type="url" formControlName="baseUrl"
+                                        placeholder="Ej. https://api.stripe.com" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="authenticationType">Tipo de Autenticación</label>
+                                    <select id="authenticationType" formControlName="authenticationType">
+                                        <option value="NONE">Sin Autenticación</option>
+                                        <option value="API_KEY">API Key</option>
+                                        <option value="BEARER">Bearer Token</option>
+                                        <option value="BASIC">Basic Auth</option>
+                                    </select>
+                                </div>
+
+                                <div></div> <!-- Spacer for grid -->
+
+                                <ng-container *ngIf="toolForm.get('authenticationType')?.value !== 'NONE'">
+                                    <div class="form-group">
+                                        <label for="apiKeyLocation">Ubicación (API Key)</label>
+                                        <select id="apiKeyLocation" formControlName="apiKeyLocation">
+                                            <option value="HEADER">Header</option>
+                                            <option value="QUERY_PARAMETER">Query Parameter</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="apiKeyName">Nombre de la clave</label>
+                                        <input id="apiKeyName" type="text" formControlName="apiKeyName"
+                                            placeholder="Ej. Authorization / x-api-key" />
+                                    </div>
+
+                                    <div class="form-group full-width">
+                                        <label for="apiKeyValue">Valor del Secreto (API Key / Token)</label>
+                                        <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
+                                            placeholder="Valor del token" />
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </ng-container>
 
                     <div class="form-group">
                         <label for="endpointPath">Ruta (Path)</label>
@@ -74,42 +151,7 @@
                         </select>
                     </div>
 
-                    <!-- Auth Settings -->
-                    <div class="form-group full-width section-title">
-                        <h3>Autenticación</h3>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="authenticationType">Tipo</label>
-                        <select id="authenticationType" formControlName="authenticationType">
-                            <option value="NONE">Sin Autenticación</option>
-                            <option value="API_KEY">API Key</option>
-                            <option value="BEARER">Bearer Token</option>
-                            <option value="BASIC">Basic Auth</option>
-                        </select>
-                    </div>
-
-                    <ng-container *ngIf="toolForm.get('authenticationType')?.value !== 'NONE'">
-                        <div class="form-group">
-                            <label for="apiKeyLocation">Ubicación (API Key)</label>
-                            <select id="apiKeyLocation" formControlName="apiKeyLocation">
-                                <option value="HEADER">Header</option>
-                                <option value="QUERY_PARAMETER">Query Parameter</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="apiKeyName">Nombre de la clave</label>
-                            <input id="apiKeyName" type="text" formControlName="apiKeyName"
-                                placeholder="Ej. Authorization / x-api-key" />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="apiKeyValue">Valor</label>
-                            <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
-                                placeholder="Valor del token" />
-                        </div>
-                    </ng-container>
 
                     <!-- Status -->
                     <div class="form-group full-width checkbox-group">

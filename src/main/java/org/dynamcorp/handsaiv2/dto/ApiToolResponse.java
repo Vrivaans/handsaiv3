@@ -20,15 +20,13 @@ public record ApiToolResponse(
         String code,
         String name,
         String description,
-        String baseUrl,
+        Long providerId,
+        String providerName,
         String endpointPath,
         HttpMethodEnum httpMethod,
         boolean enabled,
         boolean healthy,
         Instant lastHealthCheck,
-        AuthenticationTypeEnum authenticationType,
-        ApiKeyLocationEnum apiKeyLocation,
-        String apiKeyName,
         List<ToolParameterResponse> parameters) {
     public static ApiToolResponse from(ApiTool apiTool) {
         return new ApiToolResponse(
@@ -36,15 +34,13 @@ public record ApiToolResponse(
                 apiTool.getCode(),
                 apiTool.getName(),
                 apiTool.getDescription(),
-                apiTool.getBaseUrl(),
+                apiTool.getProvider().getId(),
+                apiTool.getProvider().getName(),
                 apiTool.getEndpointPath(),
                 apiTool.getHttpMethod(),
                 apiTool.isEnabled(),
                 apiTool.isHealthy(),
                 apiTool.getLastHealthCheck(),
-                apiTool.getAuthenticationType(),
-                apiTool.getApiKeyLocation(),
-                apiTool.getApiKeyName(),
                 apiTool.getParameters().stream()
                         .map(ToolParameterResponse::from)
                         .collect(Collectors.toList()));

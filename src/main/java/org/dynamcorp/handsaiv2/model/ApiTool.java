@@ -22,28 +22,19 @@ public class ApiTool extends BaseModel {
 
     private String name;
     private String description;
-    private String baseUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", nullable = false)
+    private ApiProvider provider;
+
     private String endpointPath;
 
     @Enumerated(EnumType.STRING)
     private HttpMethodEnum httpMethod;
 
-    @Enumerated(EnumType.STRING)
-    private AuthenticationTypeEnum authenticationType;
-
-    @Enumerated(EnumType.STRING)
-    private ApiKeyLocationEnum apiKeyLocation;
-
-    private String apiKeyName;
-
-    /**
-     * Stores the hashed API key or token. It is strongly recommended to encrypt this value before storing it.
-     */
-    private String apiKeyValue;
-
     private Instant lastHealthCheck;
     private boolean healthy;
 
     @OneToMany(mappedBy = "apiTool", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @lombok.Builder.Default
     private List<ToolParameter> parameters = new ArrayList<>();
 }

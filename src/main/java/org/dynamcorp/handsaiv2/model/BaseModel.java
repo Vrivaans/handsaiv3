@@ -22,6 +22,7 @@ public abstract class BaseModel {
     @Column(unique = true)
     private String code;
 
+    @lombok.Builder.Default
     private boolean enabled = true;
 
     @Column(updatable = false)
