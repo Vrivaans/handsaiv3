@@ -27,6 +27,23 @@ test.describe('Tools Save Operations', () => {
     });
 
     test('should save a tool successfully', async ({ page }) => {
+        // Mock the backend API call for getting providers
+        await page.route('**/admin/providers', async route => {
+            if (route.request().method() === 'GET') {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify([])
+                });
+            } else if (route.request().method() === 'POST') {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ id: 99, name: 'Test Provider' })
+                });
+            }
+        });
+
         // Mock the backend API call for creating a tool
         await page.route('**/admin/tools/api', async route => {
             await route.fulfill({
@@ -36,11 +53,15 @@ test.describe('Tools Save Operations', () => {
             });
         });
 
+        // Check the 'Crear nuevo proveedor' checkbox to reveal provider fields
+        await page.locator('input[formControlName="isCreatingProvider"]').check({ force: true });
+
         // Fill the required fields
+        await page.locator('input[formControlName="providerName"]').fill('Test Provider');
+        await page.locator('input[formControlName="baseUrl"]').fill('https://api.example.com');
         await page.locator('input[formControlName="name"]').fill('My Test Tool');
         await page.locator('input[formControlName="code"]').fill('TEST_TOOL_01');
         await page.locator('textarea[formControlName="description"]').fill('This is a test description');
-        await page.locator('input[formControlName="baseUrl"]').fill('https://api.example.com');
         await page.locator('input[formControlName="endpointPath"]').fill('/v1/test');
         await page.locator('select[formControlName="httpMethod"]').selectOption('POST');
         await page.locator('select[formControlName="authenticationType"]').selectOption('NONE');

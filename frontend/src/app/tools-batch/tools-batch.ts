@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, FormsModule } from '@angular/forms';
 import { ApiService } from '../api.service';
@@ -11,7 +11,7 @@ import { Router, RouterModule } from '@angular/router';
   templateUrl: './tools-batch.html',
   styleUrl: './tools-batch.scss'
 })
-export class ToolsBatchComponent {
+export class ToolsBatchComponent implements OnInit {
   batchForm: FormGroup;
   isSubmitting = false;
   successMessage = '';
@@ -21,17 +21,50 @@ export class ToolsBatchComponent {
   importError = '';
   importSuccessMessage = '';
 
+  providers: any[] = [];
+
+  // Edit Provider Modal State
+  showEditProviderModal = false;
+  providerToEdit: any | null = null;
+  editProviderForm: FormGroup;
+  isEditingProvider = false;
+  editProviderError = '';
+
   constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router) {
     this.batchForm = this.fb.group({
-      providerName: ['', Validators.required],
+      providerId: [''],
+      isCreatingProvider: [true],
+      providerName: [''],
       providerCode: [''], // Optional
-      baseUrl: ['', Validators.required],
-      authenticationType: ['NONE', Validators.required],
+      baseUrl: [''],
+      authenticationType: ['NONE'],
       apiKeyLocation: ['HEADER'],
       apiKeyName: [''],
       apiKeyValue: [''],
       // Array of individual tool endpoints
       endpoints: this.fb.array([])
+    });
+
+    this.editProviderForm = this.fb.group({
+      name: ['', Validators.required],
+      code: [''],
+      baseUrl: ['', Validators.required],
+      authenticationType: ['NONE'],
+      apiKeyLocation: ['HEADER'],
+      apiKeyName: [''],
+      apiKeyValue: ['']
+    });
+  }
+
+  ngOnInit(): void {
+    // Load existing providers
+    this.apiService.getApiProviders().subscribe({
+      next: (data) => {
+        this.providers = data;
+      },
+      error: (error) => {
+        console.error('Error loading API providers', error);
+      }
     });
   }
 
@@ -88,6 +121,58 @@ export class ToolsBatchComponent {
     this.getParameters(endpointIndex).removeAt(paramIndex);
   }
 
+  // --- Provider Edit Logic ---
+  openEditProviderModal() {
+    const selectedId = this.batchForm.get('providerId')?.value;
+    if (!selectedId) return;
+
+    const provider = this.providers.find(p => p.id == selectedId);
+    if (!provider) return;
+
+    this.providerToEdit = provider;
+    this.editProviderForm.patchValue({
+      name: provider.name,
+      code: provider.code,
+      baseUrl: provider.baseUrl,
+      authenticationType: provider.authenticationType,
+      apiKeyLocation: provider.apiKeyLocation,
+      apiKeyName: provider.apiKeyName,
+      apiKeyValue: ''
+    });
+    this.showEditProviderModal = true;
+  }
+
+  closeEditProviderModal() {
+    this.showEditProviderModal = false;
+    this.providerToEdit = null;
+    this.editProviderForm.reset();
+    this.editProviderError = '';
+    this.isEditingProvider = false;
+  }
+
+  saveProviderChanges() {
+    if (this.editProviderForm.invalid || !this.providerToEdit) {
+      this.editProviderForm.markAllAsTouched();
+      return;
+    }
+
+    this.isEditingProvider = true;
+    this.editProviderError = '';
+
+    this.apiService.updateApiProvider(this.providerToEdit.id, this.editProviderForm.value).subscribe({
+      next: (updatedProvider) => {
+        this.isEditingProvider = false;
+        this.ngOnInit(); // Refresh provider list
+        this.closeEditProviderModal();
+      },
+      error: (err) => {
+        this.isEditingProvider = false;
+        this.editProviderError = err.error?.message || 'Error al actualizar el proveedor.';
+        console.error('Error updating provider', err);
+      }
+    });
+  }
+
   importOpenApi() {
     this.importError = '';
     this.importSuccessMessage = '';
@@ -111,6 +196,8 @@ export class ToolsBatchComponent {
       } else {
         this.batchForm.patchValue({ providerName: 'Imported API - ' + new Date().toLocaleDateString() });
       }
+
+      this.batchForm.patchValue({ isCreatingProvider: true });
 
       if (!spec.paths) {
         this.importError = 'No se encontraron "paths" en el JSON.';
@@ -196,60 +283,74 @@ export class ToolsBatchComponent {
 
     const formValue = this.batchForm.value;
 
-    const providerPayload = {
-      name: formValue.providerName,
-      code: formValue.providerCode,
-      baseUrl: formValue.baseUrl,
-      authenticationType: formValue.authenticationType,
-      apiKeyLocation: formValue.apiKeyLocation,
-      apiKeyName: formValue.apiKeyName,
-      apiKeyValue: formValue.apiKeyValue
-    };
+    if (formValue.isCreatingProvider) {
+      if (!formValue.providerName || !formValue.baseUrl) {
+        this.errorMessage = 'Debe indicar el nombre y la URL base del nuevo proveedor.';
+        this.isSubmitting = false;
+        return;
+      }
 
-    this.apiService.createApiProvider(providerPayload).subscribe({
-      next: (providerResponse) => {
-        const providerId = providerResponse.id;
+      const providerPayload = {
+        name: formValue.providerName,
+        code: formValue.providerCode,
+        baseUrl: formValue.baseUrl,
+        authenticationType: formValue.authenticationType,
+        apiKeyLocation: formValue.apiKeyLocation,
+        apiKeyName: formValue.apiKeyName,
+        apiKeyValue: formValue.apiKeyValue
+      };
 
-        const apiToolsToCreate: any[] = [];
-        formValue.endpoints.forEach((ep: any) => {
-          apiToolsToCreate.push({
-            ...ep,
-            providerId: providerId,
-            enabled: true
-          });
-        });
-
-        this.apiService.createApiToolsBatch(apiToolsToCreate).subscribe({
-          next: () => {
-            this.isSubmitting = false;
-            this.successMessage = `¡Éxito! Se creó el proveedor y ${apiToolsToCreate.length} herramientas asociadas.`;
-
-            // Clear the form
-            this.batchForm.reset({ authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
-            while (this.endpoints.length !== 0) {
-              this.endpoints.removeAt(0);
-            }
-            setTimeout(() => this.router.navigate(['/home']), 1500);
-          },
-          error: (error) => {
-            this.isSubmitting = false;
-            if (error.error && error.error.message) {
-              this.errorMessage = error.error.message;
-            } else {
-              this.errorMessage = 'Hubo un error al guardar el lote de herramientas.';
-            }
-            console.error('Error batch creating tools', error);
+      this.apiService.createApiProvider(providerPayload).subscribe({
+        next: (providerResponse) => {
+          this.executeBatchCreation(providerResponse.id, formValue.endpoints);
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          if (error.error && error.error.message) {
+            this.errorMessage = error.error.message;
+          } else {
+            this.errorMessage = 'Hubo un error al crear el proveedor base.';
           }
-        });
+          console.error('Error creating provider', error);
+        }
+      });
+    } else {
+      if (!formValue.providerId) {
+        this.errorMessage = 'Debe seleccionar un proveedor existente o crear uno nuevo.';
+        this.isSubmitting = false;
+        return;
+      }
+      this.executeBatchCreation(formValue.providerId, formValue.endpoints);
+    }
+  }
+
+  private executeBatchCreation(providerId: number, endpointsData: any[]) {
+    const apiToolsToCreate: any[] = endpointsData.map((ep: any) => ({
+      ...ep,
+      providerId: providerId,
+      enabled: true
+    }));
+
+    this.apiService.createApiToolsBatch(apiToolsToCreate).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.successMessage = `¡Éxito! Se guardaron ${apiToolsToCreate.length} herramientas asociadas al lote.`;
+
+        // Clear the form
+        this.batchForm.reset({ authenticationType: 'NONE', apiKeyLocation: 'HEADER', isCreatingProvider: true });
+        while (this.endpoints.length !== 0) {
+          this.endpoints.removeAt(0);
+        }
+        setTimeout(() => this.router.navigate(['/home']), 1500);
       },
       error: (error) => {
         this.isSubmitting = false;
         if (error.error && error.error.message) {
           this.errorMessage = error.error.message;
         } else {
-          this.errorMessage = 'Hubo un error al crear el proveedor base.';
+          this.errorMessage = 'Hubo un error al guardar el lote de herramientas.';
         }
-        console.error('Error creating provider', error);
+        console.error('Error batch creating tools', error);
       }
     });
   }

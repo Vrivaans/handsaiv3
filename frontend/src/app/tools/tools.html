@@ -54,11 +54,17 @@
                     <ng-container *ngIf="!toolForm.get('isCreatingProvider')?.value">
                         <div class="form-group full-width">
                             <label for="providerId">Seleccionar Proveedor</label>
-                            <select id="providerId" formControlName="providerId">
-                                <option value="">-- Elige un Proveedor --</option>
-                                <option *ngFor="let p of providers" [value]="p.id">{{ p.name }} ({{ p.baseUrl }})
-                                </option>
-                            </select>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="providerId" formControlName="providerId" style="flex: 1;">
+                                    <option value="">-- Elige un Proveedor --</option>
+                                    <option *ngFor="let p of providers" [value]="p.id">{{ p.name }} ({{ p.baseUrl }})
+                                    </option>
+                                </select>
+                                <button type="button" class="btn secondary" *ngIf="toolForm.get('providerId')?.value"
+                                    (click)="openEditProviderModal()"
+                                    style="padding: 0.5rem 1rem; border-radius: 6px; display: flex; align-items: center; justify-content: center;"
+                                    title="Editar Proveedor Seleccionado">✏️</button>
+                            </div>
                             <p class="helper-text" *ngIf="providers.length === 0"
                                 style="color: #ffaa00; margin-top: 0.5rem;">
                                 No hay proveedores creados. Marca la casilla de arriba para crear uno nuevo.
@@ -222,4 +228,79 @@
             </form>
         </div>
     </main>
+
+    @if (showEditProviderModal) {
+    <div class="modal-overlay" (click)="closeEditProviderModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()"
+            style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-top: 0; margin-bottom: 5px; font-size: 1.5rem;">Editar Proveedor</h3>
+            <p style="text-align: left; margin-bottom: 1.5rem;">Modifica los detalles de conexión del proveedor.</p>
+
+            <form [formGroup]="editProviderForm" (ngSubmit)="saveProviderChanges()">
+                <div class="form-group">
+                    <label for="editProviderName">Nombre del Proveedor</label>
+                    <input id="editProviderName" type="text" formControlName="name" placeholder="Ej. Stripe API" />
+                </div>
+
+                <div class="form-group">
+                    <label for="editProviderCode">Código Único (Opcional)</label>
+                    <input id="editProviderCode" type="text" formControlName="code" placeholder="Ej. stripe-api" />
+                </div>
+
+                <div class="form-group">
+                    <label for="editBaseUrl">URL Base</label>
+                    <input id="editBaseUrl" type="url" formControlName="baseUrl"
+                        placeholder="Ej. https://api.stripe.com" />
+                </div>
+
+                <div class="form-group">
+                    <label for="editAuthenticationType">Tipo de Autenticación</label>
+                    <select id="editAuthenticationType" formControlName="authenticationType">
+                        <option value="NONE">Sin Autenticación</option>
+                        <option value="API_KEY">API Key</option>
+                        <option value="BEARER">Bearer Token</option>
+                        <option value="BASIC">Basic Auth</option>
+                    </select>
+                </div>
+
+                <ng-container *ngIf="editProviderForm.get('authenticationType')?.value !== 'NONE'">
+                    <div class="form-group">
+                        <label for="editApiKeyLocation">Ubicación (API Key)</label>
+                        <select id="editApiKeyLocation" formControlName="apiKeyLocation">
+                            <option value="HEADER">Header</option>
+                            <option value="QUERY_PARAMETER">Query Parameter</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editApiKeyName">Nombre de la clave</label>
+                        <input id="editApiKeyName" type="text" formControlName="apiKeyName"
+                            placeholder="Ej. Authorization / x-api-key" />
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="editApiKeyValue">Nuevo Valor del Secreto (En blanco para no cambiar)</label>
+                        <input id="editApiKeyValue" type="password" formControlName="apiKeyValue"
+                            placeholder="Nuevo valor del token" />
+                    </div>
+                </ng-container>
+
+                <div *ngIf="editProviderError" class="alert error" style="margin-top: 1rem;">
+                    {{ editProviderError }}
+                </div>
+
+                <div class="form-actions"
+                    style="margin-top: 2rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+                    <button type="button" class="btn ghost" (click)="closeEditProviderModal()"
+                        [disabled]="isEditingProvider">Cancelar</button>
+                    <button type="submit" class="btn primary"
+                        [disabled]="editProviderForm.invalid || isEditingProvider">
+                        <span *ngIf="!isEditingProvider">Guardar Cambios</span>
+                        <span *ngIf="isEditingProvider">Guardando...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    }
 </div>

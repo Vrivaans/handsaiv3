@@ -16,6 +16,7 @@ export interface ApiTool {
     apiKeyValue?: string;
     enabled: boolean;
     healthy?: boolean;
+    parameters?: any[];
 }
 
 export interface AnalyticsSummary {
@@ -78,12 +79,21 @@ export class ApiService {
         return this.http.post<ApiTool>('/admin/tools/api', tool);
     }
 
+    // Actualizar herramienta existente en BD (Admin API)
+    updateApiTool(id: number, tool: ApiTool): Observable<ApiTool> {
+        return this.http.put<ApiTool>(`/admin/tools/api/${id}`, tool);
+    }
+
     createApiToolsBatch(tools: ApiTool[]): Observable<any> {
         return this.http.post<any>('/admin/tools/api/batch', tools);
     }
 
     createApiProvider(provider: any): Observable<any> {
         return this.http.post<any>('/admin/providers', provider);
+    }
+
+    updateApiProvider(id: number, provider: any): Observable<any> {
+        return this.http.put<any>(`/admin/providers/${id}`, provider);
     }
 
     getApiProviders(): Observable<any[]> {

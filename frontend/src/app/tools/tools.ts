@@ -19,6 +19,13 @@ export class ToolsComponent implements OnInit {
     errorMessage = '';
     providers: any[] = [];
 
+    // Edit Provider Modal State
+    showEditProviderModal = false;
+    providerToEdit: any | null = null;
+    editProviderForm: FormGroup;
+    isEditingProvider = false;
+    editProviderError = '';
+
     constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router) {
         this.toolForm = this.fb.group({
             name: ['', Validators.required],
@@ -39,6 +46,16 @@ export class ToolsComponent implements OnInit {
             endpointPath: ['', Validators.required],
             httpMethod: ['GET', Validators.required],
             parameters: this.fb.array([])
+        });
+
+        this.editProviderForm = this.fb.group({
+            name: ['', Validators.required],
+            code: [''],
+            baseUrl: ['', Validators.required],
+            authenticationType: ['NONE'],
+            apiKeyLocation: ['HEADER'],
+            apiKeyName: [''],
+            apiKeyValue: ['']
         });
     }
 
@@ -66,6 +83,58 @@ export class ToolsComponent implements OnInit {
 
     removeParameter(index: number) {
         this.parameters.removeAt(index);
+    }
+
+    // --- Provider Edit Logic ---
+    openEditProviderModal() {
+        const selectedId = this.toolForm.get('providerId')?.value;
+        if (!selectedId) return;
+
+        const provider = this.providers.find(p => p.id == selectedId);
+        if (!provider) return;
+
+        this.providerToEdit = provider;
+        this.editProviderForm.patchValue({
+            name: provider.name,
+            code: provider.code,
+            baseUrl: provider.baseUrl,
+            authenticationType: provider.authenticationType,
+            apiKeyLocation: provider.apiKeyLocation,
+            apiKeyName: provider.apiKeyName,
+            apiKeyValue: '' // Reset secret field for security, require re-entry if needed
+        });
+        this.showEditProviderModal = true;
+    }
+
+    closeEditProviderModal() {
+        this.showEditProviderModal = false;
+        this.providerToEdit = null;
+        this.editProviderForm.reset();
+        this.editProviderError = '';
+        this.isEditingProvider = false;
+    }
+
+    saveProviderChanges() {
+        if (this.editProviderForm.invalid || !this.providerToEdit) {
+            this.editProviderForm.markAllAsTouched();
+            return;
+        }
+
+        this.isEditingProvider = true;
+        this.editProviderError = '';
+
+        this.apiService.updateApiProvider(this.providerToEdit.id, this.editProviderForm.value).subscribe({
+            next: (updatedProvider) => {
+                this.isEditingProvider = false;
+                this.ngOnInit(); // Refresh provider list
+                this.closeEditProviderModal();
+            },
+            error: (err) => {
+                this.isEditingProvider = false;
+                this.editProviderError = err.error?.message || 'Error al actualizar el proveedor.';
+                console.error('Error updating provider', err);
+            }
+        });
     }
 
     onSubmit() {

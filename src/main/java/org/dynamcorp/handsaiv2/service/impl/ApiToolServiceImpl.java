@@ -84,9 +84,6 @@ public class ApiToolServiceImpl implements ApiToolService {
 
         ApiTool savedTool = apiToolRepository.save(apiTool);
 
-        // Trigger health check synchronously (on virtual thread)
-        validateHealth(savedTool);
-
         // Refresh cache
         toolCacheManager.refreshCache();
 
@@ -140,6 +137,11 @@ public class ApiToolServiceImpl implements ApiToolService {
             apiTool.setHttpMethod(request.httpMethod());
 
         apiTool.setEnabled(request.enabled());
+        if (request.enabled()) {
+            apiTool.setHealthy(true);
+        } else {
+            apiTool.setHealthy(false);
+        }
         apiTool.setUpdatedAt(Instant.now());
 
         // Limpiar parámetros existentes y agregar los nuevos
@@ -163,9 +165,6 @@ public class ApiToolServiceImpl implements ApiToolService {
         }
 
         ApiTool savedTool = apiToolRepository.save(apiTool);
-
-        // Trigger health check
-        validateHealth(savedTool);
 
         // Refresh cache
         toolCacheManager.refreshCache();
