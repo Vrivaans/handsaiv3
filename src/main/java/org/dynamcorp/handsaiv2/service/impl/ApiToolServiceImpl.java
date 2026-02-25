@@ -181,7 +181,7 @@ public class ApiToolServiceImpl implements ApiToolService {
 
     @Override
     public List<ApiToolResponse> getAllApiTools() {
-        return apiToolRepository.findAll().stream()
+        return apiToolRepository.findAllWithRelations().stream()
                 .map(ApiToolResponse::from)
                 .collect(Collectors.toList());
     }

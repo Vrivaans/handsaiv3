@@ -54,7 +54,7 @@ test.describe('Tools Save Operations', () => {
         });
 
         // Check the 'Crear nuevo proveedor' checkbox to reveal provider fields
-        await page.locator('input[formControlName="isCreatingProvider"]').check({ force: true });
+        await page.locator('label[for="isCreatingProvider"]').click();
 
         // Fill the required fields
         await page.locator('input[formControlName="providerName"]').fill('Test Provider');

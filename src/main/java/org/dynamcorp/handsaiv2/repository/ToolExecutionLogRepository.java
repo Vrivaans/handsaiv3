@@ -3,6 +3,7 @@ package org.dynamcorp.handsaiv2.repository;
 import org.dynamcorp.handsaiv2.model.ToolExecutionLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,7 @@ public interface ToolExecutionLogRepository extends JpaRepository<ToolExecutionL
     @Query("SELECT AVG(t.executionTimeMs) FROM ToolExecutionLog t WHERE t.executedAt > :date")
     Double getAverageExecutionTimeAfter(Instant date);
 
+    @EntityGraph(attributePaths = { "apiTool" })
     Page<ToolExecutionLog> findAllByOrderByExecutedAtDesc(Pageable pageable);
 
     @Modifying

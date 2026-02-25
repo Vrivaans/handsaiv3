@@ -2,10 +2,9 @@ package org.dynamcorp.handsaiv2.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
@@ -13,12 +12,11 @@ import java.util.List;
 
 @Entity
 @Table(name = "api_providers")
-@Data
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true, exclude = "tools")
-@ToString(exclude = "tools")
 public class ApiProvider extends BaseModel {
 
     private String name;

@@ -1,6 +1,7 @@
 package org.dynamcorp.handsaiv2.repository;
 
 import org.dynamcorp.handsaiv2.model.ApiTool;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,11 +13,17 @@ import java.util.Optional;
 @Repository
 public interface ApiToolRepository extends JpaRepository<ApiTool, Long> {
 
-    @Query("SELECT a FROM ApiTool a JOIN FETCH a.provider WHERE a.code = :code")
+    @EntityGraph(attributePaths = { "provider", "parameters" })
+    @Query("SELECT a FROM ApiTool a WHERE a.code = :code")
     Optional<ApiTool> findByCode(@Param("code") String code);
 
-    @Query("SELECT a FROM ApiTool a JOIN FETCH a.provider WHERE a.enabled = true")
+    @EntityGraph(attributePaths = { "provider", "parameters" })
+    @Query("SELECT a FROM ApiTool a WHERE a.enabled = true")
     List<ApiTool> findAllEnabled();
+
+    @EntityGraph(attributePaths = { "provider", "parameters" })
+    @Query("SELECT a FROM ApiTool a")
+    List<ApiTool> findAllWithRelations();
 
     boolean existsByCode(String code);
 }

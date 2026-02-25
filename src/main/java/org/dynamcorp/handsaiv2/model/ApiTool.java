@@ -2,9 +2,9 @@ package org.dynamcorp.handsaiv2.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -13,11 +13,11 @@ import java.util.List;
 
 @Entity
 @Table(name = "api_tools")
-@Data
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class ApiTool extends BaseModel {
 
     private String name;
@@ -34,7 +34,7 @@ public class ApiTool extends BaseModel {
     private Instant lastHealthCheck;
     private boolean healthy;
 
-    @OneToMany(mappedBy = "apiTool", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "apiTool", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @lombok.Builder.Default
     private List<ToolParameter> parameters = new ArrayList<>();
 }

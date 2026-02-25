@@ -302,7 +302,7 @@ export class ToolsBatchComponent implements OnInit {
 
       this.apiService.createApiProvider(providerPayload).subscribe({
         next: (providerResponse) => {
-          this.executeBatchCreation(providerResponse.id, formValue.endpoints);
+          this.executeBatchCreation(providerResponse.id, formValue.endpoints, true);
         },
         error: (error) => {
           this.isSubmitting = false;
@@ -320,21 +320,25 @@ export class ToolsBatchComponent implements OnInit {
         this.isSubmitting = false;
         return;
       }
-      this.executeBatchCreation(formValue.providerId, formValue.endpoints);
+      this.executeBatchCreation(formValue.providerId, formValue.endpoints, false);
     }
   }
 
-  private executeBatchCreation(providerId: number, endpointsData: any[]) {
+  private executeBatchCreation(providerId: number | string, endpointsData: any[], isNewProvider: boolean) {
     const apiToolsToCreate: any[] = endpointsData.map((ep: any) => ({
       ...ep,
-      providerId: providerId,
+      providerId: Number(providerId),
       enabled: true
     }));
 
     this.apiService.createApiToolsBatch(apiToolsToCreate).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.successMessage = `¡Éxito! Se guardaron ${apiToolsToCreate.length} herramientas asociadas al lote.`;
+        if (isNewProvider) {
+          this.successMessage = `¡Éxito! Se creó el proveedor y ${apiToolsToCreate.length} herramientas asociadas.`;
+        } else {
+          this.successMessage = `¡Éxito! Se guardaron ${apiToolsToCreate.length} herramientas asociadas al lote.`;
+        }
 
         // Clear the form
         this.batchForm.reset({ authenticationType: 'NONE', apiKeyLocation: 'HEADER', isCreatingProvider: true });
