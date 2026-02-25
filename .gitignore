@@ -33,3 +33,9 @@ build/
 .vscode/
 /.ia/
 .DS_Store
+
+### SQLite Database ###
+*.db
+*.db-shm
+*.db-wal
+handsai.db*
