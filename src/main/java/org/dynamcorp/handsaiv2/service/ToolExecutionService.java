@@ -177,31 +177,50 @@ public class ToolExecutionService {
     private String buildUriWithQueryParams(ApiTool apiTool, Map<String, Object> parameters) {
         String basePath = apiTool.getEndpointPath();
 
-        // Para métodos GET y DELETE, añadir parámetros como query parameters
-        if (apiTool.getHttpMethod() == HttpMethodEnum.GET ||
-                apiTool.getHttpMethod() == HttpMethodEnum.DELETE) {
+        // Si hay parámetros configurados para ir en la URL (como la API Key de tipo
+        // Query Param),
+        // o si es GET/DELETE donde todos van a la URL, los agregamos
+        boolean shouldAppendParams = !parameters.isEmpty() &&
+                (apiTool.getHttpMethod() == HttpMethodEnum.GET ||
+                        apiTool.getHttpMethod() == HttpMethodEnum.DELETE ||
+                        hasQueryParametersForNonGet(apiTool, parameters));
 
-            if (!parameters.isEmpty()) {
-                StringBuilder uriBuilder = new StringBuilder(basePath);
-                uriBuilder.append("?");
-
-                parameters.entrySet().forEach(entry -> {
-                    uriBuilder.append(entry.getKey())
-                            .append("=")
-                            .append(entry.getValue())
-                            .append("&");
-                });
-
-                // Remover el último &
-                if (uriBuilder.charAt(uriBuilder.length() - 1) == '&') {
-                    uriBuilder.setLength(uriBuilder.length() - 1);
+        if (shouldAppendParams) {
+            StringBuilder uriBuilder = new StringBuilder(basePath);
+            // Verificar si el basePath ya contiene parámetros query
+            if (basePath.contains("?")) {
+                if (!basePath.endsWith("?") && !basePath.endsWith("&")) {
+                    uriBuilder.append("&");
                 }
-
-                return uriBuilder.toString();
+            } else {
+                uriBuilder.append("?");
             }
+
+            parameters.entrySet().forEach(entry -> {
+                uriBuilder.append(entry.getKey())
+                        .append("=")
+                        .append(entry.getValue())
+                        .append("&");
+            });
+
+            // Remover el último &
+            if (uriBuilder.charAt(uriBuilder.length() - 1) == '&') {
+                uriBuilder.setLength(uriBuilder.length() - 1);
+            }
+
+            return uriBuilder.toString();
         }
 
         return basePath;
+    }
+
+    private boolean hasQueryParametersForNonGet(ApiTool apiTool, Map<String, Object> parameters) {
+        // En POST/PUT/PATCH, el único parámetro que debería ir por Query String
+        // (por el momento) es la API Key, si así está configurado el provider.
+        return apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
+                apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
+                apiTool.getProvider().getApiKeyName() != null &&
+                parameters.containsKey(apiTool.getProvider().getApiKeyName());
     }
 
     private void configureAuthentication(RestClient.RequestBodySpec requestSpec, ApiTool apiTool) {
@@ -218,11 +237,9 @@ public class ToolExecutionService {
                             : "X-API-Key";
                     requestSpec.header(headerName, apiKey);
                 } else if (apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER) {
-                    // Para query param, necesitaríamos reconstruir la URI.
-                    // Por simplicidad y limitación de RestClient.RequestBodySpec,
-                    // asumimos que la mayoría usa Header.
-                    // Si se requiere Query Param, se debería añadir a la URL antes.
-                    // TODO: Implementar soporte completo para API Key en Query Param
+                    // La lógica para añadir la API Key como Query Parameter ahora se maneja en
+                    // buildUriWithQueryParams y prepareParametersWithAuth para todos los verbos
+                    // HTTP.
                 }
                 break;
 
