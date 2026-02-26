@@ -30,6 +30,12 @@ export class HomeComponent implements OnInit {
     editForm: FormGroup;
     isSubmittingEdit = false;
 
+    // Export Modal State
+    showExportModal = false;
+    exportableProviders: any[] = [];
+    selectedExportIds: Set<number> = new Set();
+    isExporting = false;
+
     constructor() {
         this.editForm = this.fb.group({
             name: ['', Validators.required],
@@ -38,6 +44,7 @@ export class HomeComponent implements OnInit {
             endpointPath: ['', Validators.required],
             httpMethod: ['GET', Validators.required],
             enabled: [true],
+            isExportable: [false],
             parameters: this.fb.array([])
         });
     }
@@ -134,7 +141,8 @@ export class HomeComponent implements OnInit {
             description: tool.description,
             endpointPath: tool.endpointPath,
             httpMethod: tool.httpMethod,
-            enabled: tool.enabled
+            enabled: tool.enabled,
+            isExportable: tool.isExportable || false
         });
         this.showEditModal = true;
     }
@@ -176,5 +184,78 @@ export class HomeComponent implements OnInit {
                 console.error('Error updating tool', err);
             }
         });
+    }
+
+    // Export Logic
+    openExportModal() {
+        this.selectedExportIds.clear();
+        this.apiService.getExportableProviders().subscribe({
+            next: (data) => {
+                this.exportableProviders = data;
+                this.showExportModal = true;
+            },
+            error: (err) => {
+                console.error('Error fetching exportable providers', err);
+                alert('No se pudieron cargar los proveedores exportables.');
+            }
+        });
+    }
+
+    closeExportModal() {
+        this.showExportModal = false;
+        this.exportableProviders = [];
+        this.selectedExportIds.clear();
+    }
+
+    toggleExportSelection(id: number) {
+        if (this.selectedExportIds.has(id)) {
+            this.selectedExportIds.delete(id);
+        } else {
+            this.selectedExportIds.add(id);
+        }
+    }
+
+    selectAllExport() {
+        if (this.selectedExportIds.size === this.exportableProviders.length) {
+            this.selectedExportIds.clear();
+        } else {
+            this.exportableProviders.forEach((p, idx) => {
+                this.selectedExportIds.add(idx); // Use index instead of name to match toggle logic
+            });
+        }
+    }
+
+    exportSelectedProviders() {
+        this.isExporting = true;
+        // Construct query URL
+        // Actually, we need IDs to build the query.
+        // Wait, does ExportApiProviderDto have ID? No! Look at ExportApiProviderDto.java: it only has name, baseUrl, etc.
+        // If it doesn't have ID, how can we filter? 
+        // Ah, the frontend needs to fetch ALL exportable providers, let user select by NAME, then just filter the JS array locally and download it!
+        // That is much better and requires no extra API backend logic!
+
+        let providersToExport = this.exportableProviders;
+        if (this.selectedExportIds.size > 0) {
+            providersToExport = this.exportableProviders.filter((_, index) => this.selectedExportIds.has(index));
+        }
+
+        const dataStr = JSON.stringify(providersToExport, null, 2);
+
+        // Use Blob instead of data URI to force the browser to respect the file name
+        const blob = new Blob([dataStr], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+
+        const exportFileDefaultName = 'handsai_herramientas_publicas.txt';
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', url);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        document.body.appendChild(linkElement); // Required for Firefox
+        linkElement.click();
+        document.body.removeChild(linkElement);
+        window.URL.revokeObjectURL(url);
+
+        this.isExporting = false;
+        this.closeExportModal();
     }
 }

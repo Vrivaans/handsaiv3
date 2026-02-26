@@ -50,6 +50,7 @@ public class ApiProviderService {
                 .apiKeyLocation(request.apiKeyLocation())
                 .apiKeyName(request.apiKeyName())
                 .apiKeyValue(request.apiKeyValue() != null ? encryptionService.encrypt(request.apiKeyValue()) : null)
+                .isExportable(request.isExportable() != null ? request.isExportable() : false)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -64,6 +65,8 @@ public class ApiProviderService {
 
         if (request.name() != null)
             existingProvider.setName(request.name());
+        if (request.code() != null)
+            existingProvider.setCode(request.code());
         if (request.baseUrl() != null)
             existingProvider.setBaseUrl(request.baseUrl());
         if (request.authenticationType() != null)
@@ -75,6 +78,10 @@ public class ApiProviderService {
 
         if (request.apiKeyValue() != null && !request.apiKeyValue().isEmpty()) {
             existingProvider.setApiKeyValue(encryptionService.encrypt(request.apiKeyValue()));
+        }
+
+        if (request.isExportable() != null) {
+            existingProvider.setExportable(request.isExportable());
         }
 
         existingProvider.setUpdatedAt(Instant.now());

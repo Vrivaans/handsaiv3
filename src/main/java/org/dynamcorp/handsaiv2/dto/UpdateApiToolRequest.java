@@ -8,10 +8,12 @@ import java.util.List;
 
 public record UpdateApiToolRequest(
         String name,
+        String code,
         String description,
         Long providerId,
         String endpointPath,
         HttpMethodEnum httpMethod,
         boolean enabled,
-        List<ToolParameterRequest> parameters) {
+        List<ToolParameterRequest> parameters,
+        Boolean isExportable) {
 }

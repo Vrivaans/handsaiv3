@@ -7,18 +7,22 @@ import org.dynamcorp.handsaiv2.model.AuthenticationTypeEnum;
 public record ApiProviderResponse(
         Long id,
         String name,
+        String code,
         String baseUrl,
         AuthenticationTypeEnum authenticationType,
         ApiKeyLocationEnum apiKeyLocation,
-        String apiKeyName) {
+        String apiKeyName,
+        boolean isExportable) {
 
     public static ApiProviderResponse from(ApiProvider provider) {
         return new ApiProviderResponse(
                 provider.getId(),
                 provider.getName(),
+                provider.getCode(),
                 provider.getBaseUrl(),
                 provider.getAuthenticationType(),
                 provider.getApiKeyLocation(),
-                provider.getApiKeyName());
+                provider.getApiKeyName(),
+                provider.isExportable());
     }
 }

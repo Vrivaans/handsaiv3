@@ -41,4 +41,8 @@ public class ApiProvider extends BaseModel {
     @OneToMany(mappedBy = "provider", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.Builder.Default
     private List<ApiTool> tools = new ArrayList<>();
+
+    @Column(columnDefinition = "boolean default false")
+    @lombok.Builder.Default
+    private boolean isExportable = false;
 }

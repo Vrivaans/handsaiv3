@@ -131,6 +131,17 @@
                                         <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
                                             placeholder="Valor del token" />
                                     </div>
+
+                                    <div class="form-group full-width checkbox-group" style="margin-top: 1rem;">
+                                        <input id="providerIsExportable" type="checkbox"
+                                            formControlName="providerIsExportable" />
+                                        <label for="providerIsExportable">Hacer que este proveedor sea público
+                                            (Exportable)</label>
+                                        <span class="helper-text"
+                                            style="display:block; margin-left: 28px; font-size: 0.85rem; color: #888;">Permite
+                                            compartir este proveedor con otros agentes en el marketplace (las API Keys
+                                            se mantendrán privadas).</span>
+                                    </div>
                                 </ng-container>
                             </div>
                         </div>
@@ -163,6 +174,11 @@
                     <div class="form-group full-width checkbox-group">
                         <input id="enabled" type="checkbox" formControlName="enabled" />
                         <label for="enabled">Habilitar esta herramienta de inmediato</label>
+                    </div>
+
+                    <div class="form-group full-width checkbox-group" style="margin-top: 0.5rem; margin-bottom: 2rem;">
+                        <input id="isExportable" type="checkbox" formControlName="isExportable" />
+                        <label for="isExportable">Hacer esta herramienta pública (Exportable)</label>
                     </div>
 
                     <!-- Parameters Section -->
@@ -284,6 +300,11 @@
                             placeholder="Nuevo valor del token" />
                     </div>
                 </ng-container>
+
+                <div class="form-group checkbox-group" style="margin-top: 1.5rem;">
+                    <input id="editIsExportable" type="checkbox" formControlName="isExportable" />
+                    <label for="editIsExportable">Proveedor público (Exportable)</label>
+                </div>
 
                 <div *ngIf="editProviderError" class="alert error" style="margin-top: 1rem;">
                     {{ editProviderError }}

@@ -8,8 +8,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "api_tools")
@@ -36,5 +36,9 @@ public class ApiTool extends BaseModel {
 
     @OneToMany(mappedBy = "apiTool", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @lombok.Builder.Default
-    private List<ToolParameter> parameters = new ArrayList<>();
+    private Set<ToolParameter> parameters = new LinkedHashSet<>();
+
+    @Column(columnDefinition = "boolean default false")
+    @lombok.Builder.Default
+    private boolean isExportable = false;
 }

@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,12 +62,13 @@ public class ApiToolServiceImpl implements ApiToolService {
                 .enabled(request.enabled() != null ? request.enabled() : true)
                 .healthy(request.enabled() != null ? request.enabled() : true) // Initially set to enabled status if
                                                                                // requested
+                .isExportable(request.isExportable() != null ? request.isExportable() : false)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
 
         if (request.parameters() != null) {
-            List<ToolParameter> parameters = request.parameters().stream()
+            Set<ToolParameter> parameters = request.parameters().stream()
                     .map(p -> ToolParameter.builder()
                             .apiTool(apiTool)
                             .name(p.name())
@@ -78,7 +81,7 @@ public class ApiToolServiceImpl implements ApiToolService {
                             .createdAt(Instant.now())
                             .updatedAt(Instant.now())
                             .build())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
             apiTool.setParameters(parameters);
         }
 
@@ -129,6 +132,8 @@ public class ApiToolServiceImpl implements ApiToolService {
 
         if (request.name() != null)
             apiTool.setName(request.name());
+        if (request.code() != null)
+            apiTool.setCode(request.code());
         if (request.description() != null)
             apiTool.setDescription(request.description());
         if (request.endpointPath() != null)
@@ -142,12 +147,16 @@ public class ApiToolServiceImpl implements ApiToolService {
         } else {
             apiTool.setHealthy(false);
         }
+        if (request.isExportable() != null) {
+            apiTool.setExportable(request.isExportable());
+        }
+
         apiTool.setUpdatedAt(Instant.now());
 
         // Limpiar parámetros existentes y agregar los nuevos
         if (request.parameters() != null) {
             apiTool.getParameters().clear();
-            List<ToolParameter> updatedParameters = request.parameters().stream()
+            Set<ToolParameter> updatedParameters = request.parameters().stream()
                     .map(paramRequest -> ToolParameter.builder()
                             .name(paramRequest.name())
                             .type(paramRequest.type())
@@ -160,7 +169,7 @@ public class ApiToolServiceImpl implements ApiToolService {
                             .createdAt(Instant.now())
                             .updatedAt(Instant.now())
                             .build())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
             apiTool.getParameters().addAll(updatedParameters);
         }
 

@@ -44,95 +44,66 @@ HandsAI es un microservicio construido con Spring Boot 3.2+ y Java 21 que permit
 
 La API se divide en dos secciones principales: la API de Administración para gestionar las herramientas y la API Pública para que los LLMs las descubran y ejecuten.
 
-### API de Administración (`/admin/tools/api`)
+### API de Importación y Exportación (`/api/export` y `/api/import`)
 
-Estos endpoints se utilizan para gestionar el ciclo de vida de las `ApiTool`.
+Estos endpoints se encargan de movilizar Proveedores y sus respectivas Herramientas hacia y desde JSON.
 
-#### 1. Crear una Herramienta API
+#### 1. Exportar Proveedores y Herramientas
+- **Endpoint**: `GET /api/export/providers?ids=1,2,3`
+- **Descripción**: Devuelve la lista de proveedores marcados como exportables, ocultando automáticamente sus API Keys reales (`<YOUR_API_KEY>`).
+- **Response Body**: Un arreglo JSON con la estructura jerárquica lista para compartir.
 
-- **Endpoint**: `POST /admin/tools/api`
-- **Descripción**: Registra una nueva herramienta de API en el sistema.
-- **Request Body**:
-
+#### 2. Importar Proveedores y Herramientas
+- **Endpoint**: `POST /api/import/providers`
+- **Descripción**: Realiza un upsert seguro (Crea o Actualiza por `code`) de una lista de Proveedores y sus Herramientas y Parámetros. Ignora valores vacíos o de plantilla (`<YOUR_API_KEY>`) para no sobrescribir secretos locales.
+- **Request Body**: (Mismo formato que la exportación)
   ```json
-  {
-    "name": "Servicio de Clima",
-    "code": "clima",
-    "enabled": true,
-    "description": "Obtiene el clima actual para una ciudad específica.",
-    "baseUrl": "https://api.weatherapi.com",
-    "endpointPath": "/v1/current.json",
-    "httpMethod": "GET",
-    "authenticationType": "API_KEY",
-    "apiKeyLocation": "QUERY_PARAMETER",
-    "apiKeyName": "key",
-    "apiKeyValue": "<API_KEY>",
-    "parameters": [
-      {
-        "name": "q",
-        "type": "STRING",
-        "description": "Nombre de la ciudad",
-        "required": true,
-        "defaultValue": null
-      }
-    ]
-  }
+  [
+    {
+      "name": "API Clima",
+      "code": "clima123",
+      "baseUrl": "https://api.weatherapi.com",
+      "authenticationType": "API_KEY",
+      "apiKeyLocation": "QUERY_PARAMETER",
+      "apiKeyName": "key",
+      "apiKeyValue": "<YOUR_API_KEY>",
+      "tools": [
+        {
+          "name": "Servicio de Clima",
+          "code": "clima-tool-1",
+          "description": "Obtiene clima...",
+          "endpointPath": "/v1/current.json",
+          "httpMethod": "GET",
+          "parameters": [
+            {
+              "name": "q",
+              "type": "STRING",
+              "description": "Ciudad",
+              "required": true,
+              "defaultValue": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
   ```
 
-- **Response Body (Ejemplo)**:
+### API de Administración de Herramientas Individuales (`/admin/tools/api` y `/admin/providers`)
 
-  ```json
-  {
-    "id": 1,
-    "code": "a1b2c3d4",
-    "name": "Servicio de Clima",
-    "description": "Obtiene el clima actual para una ciudad específica.",
-    "baseUrl": "https://api.weatherapi.com",
-    "endpointPath": "/v1/current.json",
-    "httpMethod": "GET",
-    "enabled": true,
-    "healthy": true,
-    "lastHealthCheck": "2025-08-21T10:00:00Z",
-    "parameters": [
-      {
-        "id": 1,
-        "code": "p1o2i3u4",
-        "name": "q",
-        "type": "STRING",
-        "description": "Nombre de la ciudad",
-        "required": true,
-        "defaultValue": null
-      },
-      {
-        "id": 2,
-        "code": "k1j2h3g4",
-        "name": "key",
-        "type": "STRING",
-        "description": "API Key para el servicio de clima",
-        "required": true,
-        "defaultValue": null
-      }
-    ]
-  }
-  ```
+*Nota Arquitectónica: Estos endpoints están diseñados primariamente para ser consumidos de forma transaccional por el **Frontend (Interfaz de Usuario)** para crear o editar registros uno a uno mediante sus IDs internos.*
 
-#### 2. Actualizar una Herramienta API
-
-- **Endpoint**: `PUT /admin/tools/api/{id}`
-- **Descripción**: Actualiza los detalles de una herramienta existente.
-- **Request Body**: `UpdateApiToolRequest` (similar al de creación, pero puede incluir el campo `enabled`).
-
-#### 3. Obtener todas las Herramientas API
+#### 1. Obtener todas las Herramientas API
 
 - **Endpoint**: `GET /admin/tools/api`
-- **Descripción**: Devuelve una lista de todas las herramientas registradas.
+- **Descripción**: Devuelve una lista plana de todas las herramientas registradas.
 
-#### 4. Obtener una Herramienta API por ID
+#### 2. Obtener una Herramienta API por ID
 
 - **Endpoint**: `GET /admin/tools/api/{id}`
 - **Descripción**: Devuelve los detalles de una herramienta específica.
 
-#### 5. Eliminar una Herramienta API
+#### 3. Eliminar una Herramienta API
 
 - **Endpoint**: `DELETE /admin/tools/api/{id}`
 - **Descripción**: Elimina una herramienta del sistema.

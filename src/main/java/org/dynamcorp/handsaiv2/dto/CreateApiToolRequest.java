@@ -12,12 +12,13 @@ import java.util.List;
  * if not set here.
  */
 public record CreateApiToolRequest(
-        String name,
-        String code,
-        Boolean enabled,
-        String description,
-        Long providerId,
-        String endpointPath,
-        HttpMethodEnum httpMethod,
-        List<ToolParameterRequest> parameters) {
+                String name,
+                String code,
+                Boolean enabled,
+                String description,
+                Long providerId,
+                String endpointPath,
+                HttpMethodEnum httpMethod,
+                List<ToolParameterRequest> parameters,
+                Boolean isExportable) {
 }

@@ -40,3 +40,6 @@ build/
 *.db-wal
 handsai.db*
 \n# Scripts locales\nscript_local.sh\n
+
+
+script_local.sh

@@ -31,6 +31,7 @@ export class ToolsComponent implements OnInit {
             name: ['', Validators.required],
             code: [''],
             enabled: [true],
+            isExportable: [false],
             description: ['', Validators.required],
             providerId: [''],
 
@@ -42,6 +43,7 @@ export class ToolsComponent implements OnInit {
             apiKeyLocation: ['HEADER'],
             apiKeyName: [''],
             apiKeyValue: [''],
+            providerIsExportable: [false],
 
             endpointPath: ['', Validators.required],
             httpMethod: ['GET', Validators.required],
@@ -55,7 +57,8 @@ export class ToolsComponent implements OnInit {
             authenticationType: ['NONE'],
             apiKeyLocation: ['HEADER'],
             apiKeyName: [''],
-            apiKeyValue: ['']
+            apiKeyValue: [''],
+            isExportable: [false]
         });
     }
 
@@ -101,6 +104,7 @@ export class ToolsComponent implements OnInit {
             authenticationType: provider.authenticationType,
             apiKeyLocation: provider.apiKeyLocation,
             apiKeyName: provider.apiKeyName,
+            isExportable: provider.isExportable,
             apiKeyValue: '' // Reset secret field for security, require re-entry if needed
         });
         this.showEditProviderModal = true;
@@ -169,7 +173,8 @@ export class ToolsComponent implements OnInit {
                 authenticationType: formValue.authenticationType,
                 apiKeyLocation: formValue.apiKeyLocation,
                 apiKeyName: formValue.apiKeyName,
-                apiKeyValue: formValue.apiKeyValue
+                apiKeyValue: formValue.apiKeyValue,
+                isExportable: formValue.providerIsExportable
             };
 
             this.apiService.createApiProvider(providerPayload).subscribe({
@@ -197,7 +202,7 @@ export class ToolsComponent implements OnInit {
             next: (response) => {
                 this.isSubmitting = false;
                 this.successMessage = 'Herramienta guardada con éxito.';
-                this.toolForm.reset({ enabled: true, httpMethod: 'GET', isCreatingProvider: false, authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
+                this.toolForm.reset({ enabled: true, isExportable: false, providerIsExportable: false, httpMethod: 'GET', isCreatingProvider: false, authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
                 this.parameters.clear();
                 this.ngOnInit(); // refresh providers
                 setTimeout(() => this.router.navigate(['/home']), 1500);

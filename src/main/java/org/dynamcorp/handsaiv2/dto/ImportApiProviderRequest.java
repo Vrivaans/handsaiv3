@@ -3,7 +3,9 @@ package org.dynamcorp.handsaiv2.dto;
 import org.dynamcorp.handsaiv2.model.ApiKeyLocationEnum;
 import org.dynamcorp.handsaiv2.model.AuthenticationTypeEnum;
 
-public record UpdateApiProviderRequest(
+import java.util.List;
+
+public record ImportApiProviderRequest(
         String name,
         String code,
         String baseUrl,
@@ -11,5 +13,5 @@ public record UpdateApiProviderRequest(
         ApiKeyLocationEnum apiKeyLocation,
         String apiKeyName,
         String apiKeyValue,
-        Boolean isExportable) {
+        List<ImportApiToolRequest> tools) {
 }

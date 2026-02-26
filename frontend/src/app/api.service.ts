@@ -16,6 +16,7 @@ export interface ApiTool {
     apiKeyValue?: string;
     enabled: boolean;
     healthy?: boolean;
+    isExportable?: boolean;
     parameters?: any[];
 }
 
@@ -98,6 +99,14 @@ export class ApiService {
 
     getApiProviders(): Observable<any[]> {
         return this.http.get<any[]>('/admin/providers');
+    }
+
+    getExportableProviders(ids?: number[]): Observable<any[]> {
+        let url = '/api/export/providers';
+        if (ids && ids.length > 0) {
+            url += `?ids=${ids.join(',')}`;
+        }
+        return this.http.get<any[]>(url);
     }
 
     // Eliminar herramienta en BD (Admin API)
