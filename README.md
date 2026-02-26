@@ -2,12 +2,29 @@
 
 ## 🚀 Descripción
 
-HandsAI es un microservicio construido con Spring Boot 3.2+ y Java 21 que permite a los Modelos de Lenguaje Grande (LLMs) descubrir y ejecutar herramientas dinámicamente a través de una interfaz unificada. El sistema soporta APIs REST con descubrimiento dinámico, validación de parámetros y ejecución tolerante a fallos.
+HandsAI es el puente entre los LLMs y el mundo real. La idea es simple:
+
+> **Registrás cualquier API REST → HandsAI la expone como herramienta MCP → tu LLM la puede usar.**
+
+Sin escribir código. Sin plugins. Sin configuración compleja. Solo registrás el endpoint, sus parámetros y HandsAI hace el resto: el LLM descubre las herramientas disponibles, las llama cuando las necesita y recibe los resultados — todo a través del protocolo MCP estándar.
+
+```
+[Tu LLM / Claude / cualquier cliente MCP]
+         ↓  MCP (JSON-RPC / stdio)
+  [HandsAI Bridge (Go)]
+         ↓  HTTP REST
+     [HandsAI v3 (Spring Boot)]
+         ↓  HTTP REST
+ [Cualquier API externa que registres]
+```
+
+HandsAI está construido con Spring Boot 3.2+ y Java 21.
 
 ### 🎯 Características Principales
 
-- **Descubrimiento Dinámico**: Los LLMs pueden descubrir herramientas disponibles en tiempo de ejecución
-- **Interfaz Unificada**: Un solo endpoint para ejecutar cualquier herramienta registrada
+- **Descubrimiento Dinámico**: Los LLMs descubren las herramientas disponibles en tiempo de ejecución
+- **Interfaz Unificada**: Un solo endpoint MCP para ejecutar cualquier herramienta registrada
+- **Sin código adicional**: Registrás APIs desde la UI o via JSON, sin tocar código
 - **Tolerancia a Fallos**: Manejo elegante de errores con logging completo
 - **Caché Inteligente**: Definiciones de herramientas cacheadas en memoria para alta performance
 - **Hilos Virtuales**: Aprovecha Java 21 para alta concurrencia y escalabilidad
@@ -186,26 +203,32 @@ Esta API implementa el Model Context Protocol (MCP) para la integración estanda
 
 ## 🌉 Integración con LLMs (HandsAI Bridge)
 
-Para conectar HandsAI con modelos como Claude Desktop o Claude Code, es necesario utilizar **HandsAI Bridge**, un adaptador que traduce el protocolo MCP sobre HTTP a stdio (entrada/salida estándar).
+Para conectar HandsAI con tu cliente MCP (Claude Desktop, Antigravity, VS Code, etc.) necesitás **HandsAI Bridge**, un binario Go liviano que traduce el protocolo MCP sobre stdio a llamadas HTTP REST hacia HandsAI.
 
-### Configuración para Claude Code
+→ Repo: [handsai-bridge](https://github.com/Vrivaans/handsai-bridge)
 
-Agrega la siguiente configuración a tu archivo `config.json` de Claude Code (usualmente en `~/.claude/config.json` o similar, dependiendo de tu instalación):
-***IMPORTANTE*** 
-**ESTA SECCIÓN VA A QUEDAR DEPRECADA POR EL MOMENTO, ESTAMOS CORRIGIENDO LA IMPLEMENTACIÓN POR UN NUEVO BRIDGE. PRONTO VA A SER CORREGIDO**
+### Inicio rápido
+
+1. Descargá o compilá el binario:
+```bash
+git clone https://github.com/Vrivaans/handsai-bridge.git
+cd handsai-bridge
+go build -o handsai-mcp main.go
+```
+
+2. Agregá la siguiente configuración a tu cliente MCP (`mcp_config.json` en Antigravity, `claude_desktop_config.json` en Claude Desktop, etc.):
+
 ```json
 {
   "mcpServers": {
     "handsai": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "tsx",
-        "/Users/YOUR_USER/Documents/handsai-bridge/index.ts"
-      ]
+      "command": "/ruta/absoluta/al/handsai-mcp",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-Esto iniciará automáticamente el puente `handsai-bridge` cada vez que lances Claude (o tu cliente favorito), permitiéndole acceder a todas las herramientas registradas en HandsAI.
+Con esto, cada vez que lances tu cliente MCP, tendrá acceso a todas las herramientas registradas en HandsAI automáticamente.
+
+> **Nota:** El puente también soporta un `config.json` en el mismo directorio para apuntar a una URL de HandsAI diferente a `http://localhost:8080`. Ver el README del bridge para más detalles.
