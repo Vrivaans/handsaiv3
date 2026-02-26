@@ -191,7 +191,8 @@ Para conectar HandsAI con modelos como Claude Desktop o Claude Code, es necesari
 ### Configuración para Claude Code
 
 Agrega la siguiente configuración a tu archivo `config.json` de Claude Code (usualmente en `~/.claude/config.json` o similar, dependiendo de tu instalación):
-
+***IMPORTANTE*** 
+**ESTA SECCIÓN VA A QUEDAR DEPRECADA POR EL MOMENTO, ESTAMOS CORRIGIENDO LA IMPLEMENTACIÓN POR UN NUEVO BRIDGE. PRONTO VA A SER CORREGIDO**
 ```json
 {
   "mcpServers": {
@@ -207,4 +208,4 @@ Agrega la siguiente configuración a tu archivo `config.json` de Claude Code (us
 }
 ```
 
-Esto iniciará automáticamente el puente `handsai-bridge` cada vez que lances Claude, permitiéndole acceder a todas las herramientas registradas en HandsAI.
+Esto iniciará automáticamente el puente `handsai-bridge` cada vez que lances Claude (o tu cliente favorito), permitiéndole acceder a todas las herramientas registradas en HandsAI.
