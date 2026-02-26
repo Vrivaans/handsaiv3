@@ -199,9 +199,8 @@ Agrega la siguiente configuración a tu archivo `config.json` de Claude Code (us
       "command": "npx",
       "args": [
         "-y",
-        "handsai-bridge",
-        "--api-url",
-        "http://localhost:8080"
+        "tsx",
+        "/Users/YOUR_USER/Documents/handsai-bridge/index.ts"
       ]
     }
   }
