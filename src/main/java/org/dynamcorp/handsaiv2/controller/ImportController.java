@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/import")
@@ -21,9 +22,10 @@ public class ImportController {
     private final ImportService importService;
 
     @PostMapping("/providers")
-    public ResponseEntity<String> importProviders(@RequestBody List<ImportApiProviderRequest> importRequests) {
+    public ResponseEntity<Map<String, String>> importProviders(
+            @RequestBody List<ImportApiProviderRequest> importRequests) {
         log.info("Received request to import {} providers", importRequests.size());
         importService.importProviders(importRequests);
-        return ResponseEntity.ok("Import successful");
+        return ResponseEntity.ok(Map.of("message", "Import successful"));
     }
 }

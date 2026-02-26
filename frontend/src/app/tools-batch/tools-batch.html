@@ -20,7 +20,7 @@
                     <p class="helper-text">Pega el JSON exportado directamente de otro agente HandsAI, o usa un Swagger
                         2.0 / OpenAPI 3.x y procesaremos las rutas por ti.</p>
                     <textarea id="openapi-json" [(ngModel)]="openApiJsonText" [ngModelOptions]="{standalone: true}"
-                        rows="4"
+                        rows="4" style="resize: vertical; min-height: 100px;"
                         placeholder='[ { "name": "API", "tools": [...] } ]   o   { "openapi": "3.0.0", "paths": { ... } }'></textarea>
                     <button type="button" class="btn secondary" (click)="importOpenApi()" style="margin-top: 0.5rem;">
                         Procesar JSON
