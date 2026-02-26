@@ -242,10 +242,10 @@ export class HomeComponent implements OnInit {
         const dataStr = JSON.stringify(providersToExport, null, 2);
 
         // Use Blob instead of data URI to force the browser to respect the file name
-        const blob = new Blob([dataStr], { type: 'text/plain;charset=utf-8' });
+        const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
         const url = window.URL.createObjectURL(blob);
 
-        const exportFileDefaultName = 'handsai_herramientas_publicas.txt';
+        const exportFileDefaultName = 'handsai_herramientas_publicas.json';
 
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', url);

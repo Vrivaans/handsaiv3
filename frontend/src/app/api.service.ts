@@ -109,6 +109,10 @@ export class ApiService {
         return this.http.get<any[]>(url);
     }
 
+    importProviders(payload: any[]): Observable<any> {
+        return this.http.post<any>('/api/import/providers', payload);
+    }
+
     // Eliminar herramienta en BD (Admin API)
     deleteApiTool(id: number): Observable<void> {
         return this.http.delete<void>(`/admin/tools/api/${id}`);

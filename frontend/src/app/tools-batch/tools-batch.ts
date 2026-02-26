@@ -185,6 +185,26 @@ export class ToolsBatchComponent implements OnInit {
     try {
       const spec = JSON.parse(this.openApiJsonText);
 
+      // --- NEW FEATURE: Dual Detection (HandsAI Provider Export vs OpenAPI) ---
+      if (Array.isArray(spec)) {
+        // It's a HandsAI JSON Export, import directly
+        this.isSubmitting = true;
+        this.apiService.importProviders(spec).subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            this.importSuccessMessage = '¡Importación de Proveedores de HandsAI exitosa!';
+            this.openApiJsonText = '';
+            setTimeout(() => this.router.navigate(['/home']), 1500);
+          },
+          error: (err) => {
+            this.isSubmitting = false;
+            this.importError = err.error?.message || 'Error importando Proveedores de HandsAI.';
+          }
+        });
+        return; // Wait for the async call to complete
+      }
+      // ------------------------------------------------------------------------
+
       // Try extracting base URL if present
       if (spec.servers && spec.servers.length > 0) {
         this.batchForm.patchValue({ baseUrl: spec.servers[0].url });
