@@ -276,6 +276,14 @@ public class ToolExecutionService {
     private Map<String, Object> prepareBodyParameters(ApiTool apiTool, Map<String, Object> parameters) {
         Map<String, Object> bodyParams = new java.util.HashMap<>(parameters);
 
+        // Remover parámetros de path ({paramName}) del body
+        java.util.regex.Matcher pathMatcher = java.util.regex.Pattern
+                .compile("\\{([^}]+)}")
+                .matcher(apiTool.getEndpointPath());
+        while (pathMatcher.find()) {
+            bodyParams.remove(pathMatcher.group(1));
+        }
+
         // Remover parámetros de query si están en el body
         if (apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
                 apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
