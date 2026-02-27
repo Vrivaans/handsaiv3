@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.dynamcorp.handsaiv2.dto.ApiProviderResponse;
 import org.dynamcorp.handsaiv2.dto.CreateApiProviderRequest;
 import org.dynamcorp.handsaiv2.dto.UpdateApiProviderRequest;
-import org.dynamcorp.handsaiv2.service.EncryptionService;
 import org.dynamcorp.handsaiv2.exception.ResourceNotFoundException;
 import org.dynamcorp.handsaiv2.model.ApiProvider;
 import org.dynamcorp.handsaiv2.repository.ApiProviderRepository;
@@ -14,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

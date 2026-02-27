@@ -8,7 +8,6 @@ import org.dynamcorp.handsaiv2.dto.ToolExecuteResponse;
 import org.dynamcorp.handsaiv2.exception.ResourceNotFoundException;
 import org.dynamcorp.handsaiv2.exception.ToolExecutionException;
 import org.dynamcorp.handsaiv2.model.*;
-import org.dynamcorp.handsaiv2.repository.ToolExecutionLogRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
