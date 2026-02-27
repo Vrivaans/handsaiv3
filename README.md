@@ -20,6 +20,8 @@ Sin escribir código. Sin plugins. Sin configuración compleja. Solo registrás 
 
 HandsAI está construido con Spring Boot 3.2+ y Java 21.
 
+![HandsAI - Panel principal mostrando herramientas activas y guardadas](docs/assets/lista-herramientas-home.png)
+
 ### 🎯 Características Principales
 
 - **Descubrimiento Dinámico**: Los LLMs descubren las herramientas disponibles en tiempo de ejecución
@@ -39,6 +41,8 @@ HandsAI está construido con Spring Boot 3.2+ y Java 21.
 ```
 
 Sin reinicios. Sin redeploys. Las herramientas están disponibles de forma inmediata.
+
+![HandsAI - Importador de APIs via JSON u OpenAPI](docs/assets/importacion-multiple-png.png)
 
 ## 🛠️ Stack Tecnológico
 
@@ -243,6 +247,20 @@ go build -o handsai-mcp main.go
 Con esto, cada vez que lances tu cliente MCP, tendrá acceso a todas las herramientas registradas en HandsAI automáticamente.
 
 > **Nota:** El puente también soporta un `config.json` en el mismo directorio para apuntar a una URL de HandsAI diferente a `http://localhost:8080`. Ver el README del bridge para más detalles.
+
+### En acción
+
+**Claude Desktop** detectando HandsAI como conector MCP:
+
+![Claude Desktop detectando HandsAI como conector MCP](docs/assets/claude-detecta-handsai.png)
+
+**Claude** ejecutando una herramienta de HandsAI en tiempo real:
+
+![Claude ejecutando la herramienta de clima de HandsAI](docs/assets/handsai-uso.png)
+
+**Antigravity** usando HandsAI para consultar el clima:
+
+![Antigravity usando la herramienta api-clima de HandsAI](docs/assets/antigravity-uso-handsai.png)
 
 ## 📚 Casos de Uso
 
