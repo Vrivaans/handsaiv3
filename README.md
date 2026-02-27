@@ -1,5 +1,10 @@
 # HandsAI - IA como cerebro, HandsAI como sus manos
 
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?logo=springboot&logoColor=white)
+![MCP](https://img.shields.io/badge/Protocol-MCP-blueviolet)
+![License](https://img.shields.io/badge/License-AGPL--3.0-blue?logo=gnu)
+
 ## 🚀 Descripción
 
 HandsAI es el puente entre los LLMs y el mundo real. La idea es simple:
@@ -263,6 +268,13 @@ Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Anti
 **Antigravity** usando HandsAI para consultar el clima:
 
 ![Antigravity usando la herramienta api-clima de HandsAI](docs/assets/antigravity-uso-handsai.png)
+
+## 🛣️ Roadmap
+
+- [ ] **Autenticación dinámica (OAuth / Token refresh)** — soporte para herramientas que requieren obtener un token antes de ejecutarlas (ej: OAuth2 client credentials, login endpoints)
+- [ ] Más casos de uso y conectores preconstruidos
+- [ ] Soporte a GraphQL como tipo de herramienta
+- [ ] Interfaces multi-idioma (EN/ES)
 
 ## 📚 Casos de Uso
 
