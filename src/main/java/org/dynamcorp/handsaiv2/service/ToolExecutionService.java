@@ -309,6 +309,18 @@ public class ToolExecutionService {
             bodyParams.remove(apiTool.getProvider().getApiKeyName());
         }
 
+        // Inyectar API key en el body si la localización es IN_BODY
+        if (apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
+                apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.IN_BODY &&
+                apiTool.getProvider().getApiKeyName() != null &&
+                apiTool.getProvider().getApiKeyValue() != null) {
+
+            // Siempre forzamos el put para que pise cualquier valor dummy
+            // enviado desde el payload del servidor MCP.
+            bodyParams.put(apiTool.getProvider().getApiKeyName(),
+                    encryptionService.decrypt(apiTool.getProvider().getApiKeyValue()));
+        }
+
         return bodyParams;
     }
 }
