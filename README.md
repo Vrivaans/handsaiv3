@@ -232,3 +232,13 @@ go build -o handsai-mcp main.go
 Con esto, cada vez que lances tu cliente MCP, tendrá acceso a todas las herramientas registradas en HandsAI automáticamente.
 
 > **Nota:** El puente también soporta un `config.json` en el mismo directorio para apuntar a una URL de HandsAI diferente a `http://localhost:8080`. Ver el README del bridge para más detalles.
+
+## 📚 Casos de Uso
+
+Ejemplos listos para importar en HandsAI. Cada caso incluye el JSON de configuración y una guía de uso.
+
+| Caso | Descripción |
+|------|-------------|
+| [🌤️ API del Clima](docs/casos-de-uso/CLIMA.md) | Consulta el clima actual de cualquier ciudad usando WeatherAPI |
+
+> Más casos de uso próximamente. Las imágenes y capturas de pantalla de cada caso se almacenan en [`docs/assets/`](docs/assets/).
