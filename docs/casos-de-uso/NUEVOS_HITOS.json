@@ -6,7 +6,7 @@
         "authenticationType": "BEARER_TOKEN",
         "apiKeyLocation": "HEADER",
         "apiKeyName": "Authorization",
-        "apiKeyValue": "",
+        "apiKeyValue": "<YOUR_API_KEY>",
         "customHeaders": {
             "Content-Type": "application/json",
             "User-Agent": "HandsAI/1.0"
@@ -60,7 +60,7 @@
         "authenticationType": "API_KEY",
         "apiKeyLocation": "IN_BODY",
         "apiKeyName": "api_key",
-        "apiKeyValue": "",
+        "apiKeyValue": "<YOUR_API_KEY>",
         "customHeaders": {
             "Content-Type": "application/json"
         },
@@ -113,7 +113,7 @@
         "authenticationType": "BEARER_TOKEN",
         "apiKeyLocation": "HEADER",
         "apiKeyName": "Authorization",
-        "apiKeyValue": "",
+        "apiKeyValue": "<YOUR_API_KEY>",
         "customHeaders": {
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",

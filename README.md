@@ -265,6 +265,8 @@ Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Anti
 
 ![Claude ejecutando la herramienta de clima de HandsAI](docs/assets/handsai-uso.png)
 
+![HandsAI despachando un correo exitosamente con Resend en tiempo real](docs/assets/handsai-resend-works.png)
+
 **Antigravity** usando HandsAI para consultar el clima:
 
 ![Antigravity usando la herramienta api-clima de HandsAI](docs/assets/antigravity-uso-handsai.png)
