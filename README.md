@@ -273,7 +273,6 @@ Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Anti
 
 - [ ] **Autenticación dinámica (OAuth / Token refresh)** — soporte para herramientas que requieren obtener un token antes de ejecutarlas (ej: OAuth2 client credentials, login endpoints)
 - [ ] Más casos de uso y conectores preconstruidos
-- [ ] Soporte a GraphQL como tipo de herramienta
 - [ ] Interfaces multi-idioma (EN/ES)
 
 ## 📚 Casos de Uso
