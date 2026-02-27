@@ -24,6 +24,7 @@ public class ApiProviderService {
     private final ApiProviderRepository providerRepository;
     private final EncryptionService encryptionService;
     private final ObjectMapper objectMapper;
+    private final ToolCacheManager toolCacheManager;
 
     @Transactional(readOnly = true)
     public List<ApiProviderResponse> getAllProviders() {
@@ -66,7 +67,9 @@ public class ApiProviderService {
                 .updatedAt(Instant.now())
                 .build();
 
-        return ApiProviderResponse.from(providerRepository.save(provider));
+        ApiProviderResponse response = ApiProviderResponse.from(providerRepository.save(provider));
+        toolCacheManager.refreshCache();
+        return response;
     }
 
     @Transactional
@@ -108,7 +111,9 @@ public class ApiProviderService {
         }
 
         existingProvider.setUpdatedAt(Instant.now());
-        return ApiProviderResponse.from(providerRepository.save(existingProvider));
+        ApiProviderResponse response = ApiProviderResponse.from(providerRepository.save(existingProvider));
+        toolCacheManager.refreshCache();
+        return response;
     }
 
     @Transactional
@@ -117,5 +122,6 @@ public class ApiProviderService {
             throw new ResourceNotFoundException("Provider not found with id: " + id);
         }
         providerRepository.deleteById(id);
+        toolCacheManager.refreshCache();
     }
 }
