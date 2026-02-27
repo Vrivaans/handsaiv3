@@ -177,13 +177,27 @@ public class ToolExecutionService {
     private String buildUriWithQueryParams(ApiTool apiTool, Map<String, Object> parameters) {
         String basePath = apiTool.getEndpointPath();
 
+        // Sustituir path parameters del tipo {paramName} con sus valores
+        Map<String, Object> remainingParams = new java.util.HashMap<>(parameters);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("\\{([^}]+)}")
+                .matcher(basePath);
+        StringBuffer resolvedPath = new StringBuffer();
+        while (matcher.find()) {
+            String paramName = matcher.group(1);
+            Object value = remainingParams.remove(paramName);
+            matcher.appendReplacement(resolvedPath, value != null ? value.toString() : matcher.group(0));
+        }
+        matcher.appendTail(resolvedPath);
+        basePath = resolvedPath.toString();
+
         // Si hay parámetros configurados para ir en la URL (como la API Key de tipo
         // Query Param),
         // o si es GET/DELETE donde todos van a la URL, los agregamos
-        boolean shouldAppendParams = !parameters.isEmpty() &&
+        boolean shouldAppendParams = !remainingParams.isEmpty() &&
                 (apiTool.getHttpMethod() == HttpMethodEnum.GET ||
                         apiTool.getHttpMethod() == HttpMethodEnum.DELETE ||
-                        hasQueryParametersForNonGet(apiTool, parameters));
+                        hasQueryParametersForNonGet(apiTool, remainingParams));
 
         if (shouldAppendParams) {
             StringBuilder uriBuilder = new StringBuilder(basePath);
@@ -196,7 +210,7 @@ public class ToolExecutionService {
                 uriBuilder.append("?");
             }
 
-            parameters.entrySet().forEach(entry -> {
+            remainingParams.entrySet().forEach(entry -> {
                 uriBuilder.append(entry.getKey())
                         .append("=")
                         .append(entry.getValue())

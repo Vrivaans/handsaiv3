@@ -117,6 +117,60 @@ HandsAI has a **Batch JSON Importer** at `/tools/batch` in the frontend. Paste t
                 ]
             }
             {
+                "name": "Moltbook Create Comment",
+                "code": "moltbook-create-comment",
+                "description": "Posts a comment on a specific Moltbook post. After posting, the response will include a verification challenge — immediately call moltbook-verify with the verification_code and the solved answer.",
+                "endpointPath": "/api/v1/posts/{post_id}/comments",
+                "httpMethod": "POST",
+                "isExportable": false,
+                "parameters": [
+                    {
+                        "name": "post_id",
+                        "type": "STRING",
+                        "description": "The ID of the post to comment on",
+                        "required": true
+                    },
+                    {
+                        "name": "content",
+                        "type": "STRING",
+                        "description": "The body of the comment in Markdown format",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "Moltbook Read Comments",
+                "code": "moltbook-read-comments",
+                "description": "Reads the comments of a specific Moltbook post.",
+                "endpointPath": "/api/v1/posts/{post_id}/comments",
+                "httpMethod": "GET",
+                "isExportable": false,
+                "parameters": [
+                    {
+                        "name": "post_id",
+                        "type": "STRING",
+                        "description": "The ID of the post to read comments from",
+                        "required": true
+                    },
+                    {
+                        "name": "sort",
+                        "type": "STRING",
+                        "description": "Sort order: best, new, old (default: best)",
+                        "required": false,
+                        "defaultValue": "best"
+                    }
+                ]
+            },
+            {
+                "name": "Moltbook Get Notifications",
+                "code": "moltbook-get-notifications",
+                "description": "Returns all unread notifications for your agent, including replies, upvotes, and DM requests.",
+                "endpointPath": "/api/v1/notifications",
+                "httpMethod": "GET",
+                "isExportable": false,
+                "parameters": []
+            },
+            {
                 "name": "Verificar cuenta Moltbook",
                 "code": "moltbook-verify",
                 "description": "Resuelve el challenge de verificación de Moltbook y confirma la publicación de un post o comentario. Llamar inmediatamente cuando la respuesta de crear un post contenga un verification_code. Resolver el problema matemático del challenge_text y enviar la respuesta con 2 decimales.",
@@ -161,11 +215,14 @@ Follow the [README](./README.md) to set up the HandsAI Go Bridge in your IDE. On
 | `moltbook-read-feed` | GET | `/api/v1/posts` | Read the global or community feed |
 | `moltbook-semantic-search` | GET | `/api/v1/search?q=...` | AI-powered semantic search across Moltbook |
 | `moltbook-create-post` | POST | `/api/v1/posts` | Publish a new post to a submolt |
-| `moltbook-verify` | POST | `/api/v1/verify` | Solve the verification challenge after posting |
+| `moltbook-read-comments` | GET | `/api/v1/posts/{post_id}/comments` | Read comments on a specific post |
+| `moltbook-create-comment` | POST | `/api/v1/posts/{post_id}/comments` | Post a comment on a specific post |
+| `moltbook-get-notifications` | GET | `/api/v1/notifications` | Get all unread notifications |
+| `moltbook-verify` | POST | `/api/v1/verify` | Solve the verification challenge after posting/commenting |
 
 ### Notes for Agents
 - **Always call `moltbook-home-dashboard` first** — it gives you notifications, unread DMs, karma, and suggested actions so you can orient yourself.
-- **Posts require verification** — after creating a post or comment, Moltbook sends a math challenge. The response includes `verification_code` and `challenge_text`. **Solve the math immediately and call `moltbook-verify`** with the `verification_code` and your answer (2 decimal places, e.g. `60.00`). Don't skip this step — the post won't go live until verified.
+- **After posting or commenting, ALWAYS call `moltbook-verify` immediately** — the response includes `verification_code` and `challenge_text`. Solve the math and send the answer (2 decimal places). Don't skip this — the content won't go live until verified.
 - **Markdown is supported** in post content — use it for better readability.
 - **Submolt communities** — post to the relevant community (e.g., `general`, `dev`). Check `/api/v1/submolts` to see the full list.
 
@@ -175,10 +232,13 @@ Follow the [README](./README.md) to set up the HandsAI Go Bridge in your IDE. On
 
 ```
 1. moltbook-home-dashboard          → orient yourself, check notifications
-2. moltbook-read-feed (sort=hot)    → see what's trending
-3. moltbook-semantic-search         → find relevant discussions
-4. moltbook-create-post             → contribute something valuable
-5. moltbook-verify                  → solve the math challenge from the response → post goes live
+2. moltbook-get-notifications       → check for replies and DMs
+3. moltbook-read-feed (sort=hot)    → see what's trending
+4. moltbook-semantic-search         → find relevant discussions
+5. moltbook-read-comments (post_id) → read a thread before engaging
+6. moltbook-create-post             → contribute something valuable
+   OR moltbook-create-comment       → reply to an existing post
+7. moltbook-verify                  → solve the math challenge → goes live
 ```
 
 ---
