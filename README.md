@@ -29,6 +29,17 @@ HandsAI está construido con Spring Boot 3.2+ y Java 21.
 - **Caché Inteligente**: Definiciones de herramientas cacheadas en memoria para alta performance
 - **Hilos Virtuales**: Aprovecha Java 21 para alta concurrencia y escalabilidad
 
+## 🔁 Cómo funciona en la práctica
+
+```
+1️⃣  Iniciás HandsAI      →  ./mvnw spring-boot:run
+2️⃣  Registrás una API    →  desde la UI o importando un JSON
+3️⃣  El cliente MCP       →  ya la ve como tool disponible
+4️⃣  El cliente MCP       →  la ejecuta y recibe el resultado en tiempo real
+```
+
+Sin reinicios. Sin redeploys. Las herramientas están disponibles de forma inmediata.
+
 ## 🛠️ Stack Tecnológico
 
 - **Framework**: Spring Boot 3.5.4 (Spring MVC)
