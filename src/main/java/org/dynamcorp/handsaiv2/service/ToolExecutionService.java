@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 @Slf4j
@@ -125,6 +126,20 @@ public class ToolExecutionService {
 
         // Configurar autenticación
         configureAuthentication(requestSpec, apiTool);
+
+        // Configurar headers personalizados opcionales
+        if (apiTool.getProvider().getCustomHeadersJson() != null
+                && !apiTool.getProvider().getCustomHeadersJson().isEmpty()) {
+            try {
+                Map<String, String> customHeaders = objectMapper.readValue(apiTool.getProvider().getCustomHeadersJson(),
+                        new TypeReference<Map<String, String>>() {
+                        });
+                customHeaders.forEach(requestSpec::header);
+            } catch (Exception e) {
+                log.warn("Failed to parse customHeadersJson for tool execution: {}",
+                        apiTool.getProvider().getCustomHeadersJson(), e);
+            }
+        }
 
         // Configurar el body para métodos que lo requieren
         if (httpMethod == HttpMethod.GET || httpMethod == HttpMethod.DELETE) {

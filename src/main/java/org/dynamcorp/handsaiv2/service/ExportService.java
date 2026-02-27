@@ -10,8 +10,11 @@ import org.dynamcorp.handsaiv2.model.ApiTool;
 import org.dynamcorp.handsaiv2.repository.ApiProviderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +24,7 @@ public class ExportService {
 
     private final ApiProviderRepository apiProviderRepository;
     private static final String MASKED_API_KEY = "<YOUR_API_KEY>";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional(readOnly = true)
     public List<ExportApiProviderDto> exportProviders(List<Long> providerIds) {
@@ -44,6 +48,17 @@ public class ExportService {
                 .map(this::mapToExportToolDto)
                 .collect(Collectors.toList());
 
+        Map<String, String> customHeaders = null;
+        if (provider.getCustomHeadersJson() != null && !provider.getCustomHeadersJson().isEmpty()) {
+            try {
+                customHeaders = objectMapper.readValue(provider.getCustomHeadersJson(),
+                        new TypeReference<Map<String, String>>() {
+                        });
+            } catch (Exception e) {
+                log.error("Failed to parse customHeadersJson for export on provider {}", provider.getId(), e);
+            }
+        }
+
         return new ExportApiProviderDto(
                 provider.getName(),
                 provider.getCode(),
@@ -52,6 +67,7 @@ public class ExportService {
                 provider.getApiKeyLocation(),
                 provider.getApiKeyName(),
                 provider.getApiKeyValue() != null ? MASKED_API_KEY : null,
+                customHeaders,
                 exportTools);
     }
 

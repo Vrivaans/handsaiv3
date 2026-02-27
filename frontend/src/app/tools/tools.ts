@@ -44,6 +44,7 @@ export class ToolsComponent implements OnInit {
             apiKeyName: [''],
             apiKeyValue: [''],
             providerIsExportable: [false],
+            customHeaders: this.fb.array([]),
 
             endpointPath: ['', Validators.required],
             httpMethod: ['GET', Validators.required],
@@ -58,7 +59,8 @@ export class ToolsComponent implements OnInit {
             apiKeyLocation: ['HEADER'],
             apiKeyName: [''],
             apiKeyValue: [''],
-            isExportable: [false]
+            isExportable: [false],
+            customHeaders: this.fb.array([])
         });
     }
 
@@ -88,6 +90,37 @@ export class ToolsComponent implements OnInit {
         this.parameters.removeAt(index);
     }
 
+    // --- Custom Headers Helpers ---
+    get customHeaders() {
+        return this.toolForm.get('customHeaders') as FormArray;
+    }
+
+    addCustomHeader() {
+        this.customHeaders.push(this.fb.group({
+            key: ['', Validators.required],
+            value: ['', Validators.required]
+        }));
+    }
+
+    removeCustomHeader(index: number) {
+        this.customHeaders.removeAt(index);
+    }
+
+    get editCustomHeaders() {
+        return this.editProviderForm.get('customHeaders') as FormArray;
+    }
+
+    addEditCustomHeader() {
+        this.editCustomHeaders.push(this.fb.group({
+            key: ['', Validators.required],
+            value: ['', Validators.required]
+        }));
+    }
+
+    removeEditCustomHeader(index: number) {
+        this.editCustomHeaders.removeAt(index);
+    }
+
     // --- Provider Edit Logic ---
     openEditProviderModal() {
         const selectedId = this.toolForm.get('providerId')?.value;
@@ -107,6 +140,17 @@ export class ToolsComponent implements OnInit {
             isExportable: provider.isExportable,
             apiKeyValue: '' // Reset secret field for security, require re-entry if needed
         });
+
+        this.editCustomHeaders.clear();
+        if (provider.customHeaders) {
+            Object.keys(provider.customHeaders).forEach(k => {
+                this.editCustomHeaders.push(this.fb.group({
+                    key: [k, Validators.required],
+                    value: [provider.customHeaders[k], Validators.required]
+                }));
+            });
+        }
+
         this.showEditProviderModal = true;
     }
 
@@ -127,7 +171,15 @@ export class ToolsComponent implements OnInit {
         this.isEditingProvider = true;
         this.editProviderError = '';
 
-        this.apiService.updateApiProvider(this.providerToEdit.id, this.editProviderForm.value).subscribe({
+        const payload = {
+            ...this.editProviderForm.value,
+            customHeaders: this.editCustomHeaders.value.reduce((acc: any, curr: any) => {
+                if (curr.key && curr.value) acc[curr.key] = curr.value;
+                return acc;
+            }, {})
+        };
+
+        this.apiService.updateApiProvider(this.providerToEdit.id, payload).subscribe({
             next: (updatedProvider) => {
                 this.isEditingProvider = false;
                 this.ngOnInit(); // Refresh provider list
@@ -174,7 +226,11 @@ export class ToolsComponent implements OnInit {
                 apiKeyLocation: formValue.apiKeyLocation,
                 apiKeyName: formValue.apiKeyName,
                 apiKeyValue: formValue.apiKeyValue,
-                isExportable: formValue.providerIsExportable
+                isExportable: formValue.providerIsExportable,
+                customHeaders: formValue.customHeaders.reduce((acc: any, curr: any) => {
+                    if (curr.key && curr.value) acc[curr.key] = curr.value;
+                    return acc;
+                }, {})
             };
 
             this.apiService.createApiProvider(providerPayload).subscribe({
@@ -204,6 +260,7 @@ export class ToolsComponent implements OnInit {
                 this.successMessage = 'Herramienta guardada con éxito.';
                 this.toolForm.reset({ enabled: true, isExportable: false, providerIsExportable: false, httpMethod: 'GET', isCreatingProvider: false, authenticationType: 'NONE', apiKeyLocation: 'HEADER' });
                 this.parameters.clear();
+                this.customHeaders.clear();
                 this.ngOnInit(); // refresh providers
                 setTimeout(() => this.router.navigate(['/home']), 1500);
             },

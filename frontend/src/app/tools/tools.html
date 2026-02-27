@@ -143,6 +143,39 @@
                                             se mantendrán privadas).</span>
                                     </div>
                                 </ng-container>
+
+                                <div class="form-group full-width" style="margin-top: 1rem;">
+                                    <details
+                                        style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
+                                        <summary
+                                            style="cursor: pointer; font-weight: 500; outline: none; padding: 0.5rem 0;">
+                                            Opciones Avanzadas (Custom Headers)
+                                        </summary>
+                                        <div
+                                            style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                                            <p class="helper-text" style="margin-bottom: 1rem;">Agrega headers
+                                                personalizados adicionales para este proveedor que se enviarán en
+                                                cada petición.</p>
+                                            <button type="button" class="btn secondary" (click)="addCustomHeader()"
+                                                style="margin-bottom: 1rem; padding: 0.4rem 0.8rem; font-size: 0.9rem;">+
+                                                Añadir Header</button>
+
+                                            <div formArrayName="customHeaders">
+                                                <div *ngFor="let header of customHeaders.controls; let idx=index"
+                                                    [formGroupName]="idx"
+                                                    style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
+                                                    <input type="text" formControlName="key"
+                                                        placeholder="Key (ej. X-Custom-Header)" style="flex: 1;">
+                                                    <input type="text" formControlName="value" placeholder="Value"
+                                                        style="flex: 1;">
+                                                    <button type="button" class="btn delete-btn"
+                                                        (click)="removeCustomHeader(idx)"
+                                                        style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
                             </div>
                         </div>
                     </ng-container>
@@ -300,6 +333,35 @@
                             placeholder="Nuevo valor del token" />
                     </div>
                 </ng-container>
+
+                <div class="form-group full-width" style="margin-top: 1rem;">
+                    <details
+                        style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
+                        <summary style="cursor: pointer; font-weight: 500; outline: none; padding: 0.5rem 0;">
+                            Opciones Avanzadas (Custom Headers)
+                        </summary>
+                        <div
+                            style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <p class="helper-text" style="margin-bottom: 1rem;">Agrega headers personalizados
+                                adicionales para este proveedor que se enviarán en cada petición.</p>
+                            <button type="button" class="btn secondary" (click)="addEditCustomHeader()"
+                                style="margin-bottom: 1rem; padding: 0.4rem 0.8rem; font-size: 0.9rem;">+ Añadir
+                                Header</button>
+
+                            <div formArrayName="customHeaders">
+                                <div *ngFor="let header of editCustomHeaders.controls; let idx=index"
+                                    [formGroupName]="idx"
+                                    style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
+                                    <input type="text" formControlName="key" placeholder="Key (ej. X-Custom-Header)"
+                                        style="flex: 1;">
+                                    <input type="text" formControlName="value" placeholder="Value" style="flex: 1;">
+                                    <button type="button" class="btn delete-btn" (click)="removeEditCustomHeader(idx)"
+                                        style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
 
                 <div class="form-group checkbox-group" style="margin-top: 1.5rem;">
                     <input id="editIsExportable" type="checkbox" formControlName="isExportable" />

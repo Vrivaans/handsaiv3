@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,7 @@ public class ImportService {
     private final ApiToolRepository toolRepository;
     private final EncryptionService encryptionService;
     private final ToolCacheManager toolCacheManager;
+    private final ObjectMapper objectMapper;
 
     private static final String MASKED_API_KEY = "<YOUR_API_KEY>";
 
@@ -72,9 +74,20 @@ public class ImportService {
         provider.setApiKeyName(req.apiKeyName());
         provider.setExportable(true); // Since it was exported/imported
 
-        // Only update API Key if it's NOT the masked placeholder and NOT empty
         if (req.apiKeyValue() != null && !req.apiKeyValue().isBlank() && !req.apiKeyValue().equals(MASKED_API_KEY)) {
             provider.setApiKeyValue(encryptionService.encrypt(req.apiKeyValue()));
+        }
+
+        if (req.customHeaders() != null) {
+            try {
+                if (req.customHeaders().isEmpty()) {
+                    provider.setCustomHeadersJson(null);
+                } else {
+                    provider.setCustomHeadersJson(objectMapper.writeValueAsString(req.customHeaders()));
+                }
+            } catch (Exception e) {
+                log.error("Failed to serialize customHeaders during import for provider: {}", req.name(), e);
+            }
         }
 
         provider.setUpdatedAt(Instant.now());

@@ -33,6 +33,12 @@ public class ApiProvider extends BaseModel {
     private String apiKeyName;
 
     /**
+     * Optional custom headers stored as JSON string. Ex: {"User-Agent": "MyAgent"}
+     */
+    @Column(columnDefinition = "TEXT")
+    private String customHeadersJson;
+
+    /**
      * Stores the hashed API key or token. It is strongly recommended to encrypt
      * this value before storing it.
      */

@@ -41,6 +41,7 @@ export class ToolsBatchComponent implements OnInit {
       apiKeyLocation: ['HEADER'],
       apiKeyName: [''],
       apiKeyValue: [''],
+      customHeaders: this.fb.array([]),
       // Array of individual tool endpoints
       endpoints: this.fb.array([])
     });
@@ -52,7 +53,8 @@ export class ToolsBatchComponent implements OnInit {
       authenticationType: ['NONE'],
       apiKeyLocation: ['HEADER'],
       apiKeyName: [''],
-      apiKeyValue: ['']
+      apiKeyValue: [''],
+      customHeaders: this.fb.array([])
     });
   }
 
@@ -121,6 +123,36 @@ export class ToolsBatchComponent implements OnInit {
     this.getParameters(endpointIndex).removeAt(paramIndex);
   }
 
+  get customHeaders() {
+    return this.batchForm.get('customHeaders') as FormArray;
+  }
+
+  addCustomHeader() {
+    this.customHeaders.push(this.fb.group({
+      key: ['', Validators.required],
+      value: ['', Validators.required]
+    }));
+  }
+
+  removeCustomHeader(index: number) {
+    this.customHeaders.removeAt(index);
+  }
+
+  get editCustomHeaders() {
+    return this.editProviderForm.get('customHeaders') as FormArray;
+  }
+
+  addEditCustomHeader() {
+    this.editCustomHeaders.push(this.fb.group({
+      key: ['', Validators.required],
+      value: ['', Validators.required]
+    }));
+  }
+
+  removeEditCustomHeader(index: number) {
+    this.editCustomHeaders.removeAt(index);
+  }
+
   // --- Provider Edit Logic ---
   openEditProviderModal() {
     const selectedId = this.batchForm.get('providerId')?.value;
@@ -139,6 +171,17 @@ export class ToolsBatchComponent implements OnInit {
       apiKeyName: provider.apiKeyName,
       apiKeyValue: ''
     });
+
+    this.editCustomHeaders.clear();
+    if (provider.customHeaders) {
+      Object.keys(provider.customHeaders).forEach(k => {
+        this.editCustomHeaders.push(this.fb.group({
+          key: [k, Validators.required],
+          value: [provider.customHeaders[k], Validators.required]
+        }));
+      });
+    }
+
     this.showEditProviderModal = true;
   }
 
@@ -159,7 +202,15 @@ export class ToolsBatchComponent implements OnInit {
     this.isEditingProvider = true;
     this.editProviderError = '';
 
-    this.apiService.updateApiProvider(this.providerToEdit.id, this.editProviderForm.value).subscribe({
+    const payload = {
+      ...this.editProviderForm.value,
+      customHeaders: this.editCustomHeaders.value.reduce((acc: any, curr: any) => {
+        if (curr.key && curr.value) acc[curr.key] = curr.value;
+        return acc;
+      }, {})
+    };
+
+    this.apiService.updateApiProvider(this.providerToEdit.id, payload).subscribe({
       next: (updatedProvider) => {
         this.isEditingProvider = false;
         this.ngOnInit(); // Refresh provider list
@@ -317,7 +368,11 @@ export class ToolsBatchComponent implements OnInit {
         authenticationType: formValue.authenticationType,
         apiKeyLocation: formValue.apiKeyLocation,
         apiKeyName: formValue.apiKeyName,
-        apiKeyValue: formValue.apiKeyValue
+        apiKeyValue: formValue.apiKeyValue,
+        customHeaders: formValue.customHeaders.reduce((acc: any, curr: any) => {
+          if (curr.key && curr.value) acc[curr.key] = curr.value;
+          return acc;
+        }, {})
       };
 
       this.apiService.createApiProvider(providerPayload).subscribe({
@@ -362,6 +417,7 @@ export class ToolsBatchComponent implements OnInit {
 
         // Clear the form
         this.batchForm.reset({ authenticationType: 'NONE', apiKeyLocation: 'HEADER', isCreatingProvider: true });
+        this.customHeaders.clear();
         while (this.endpoints.length !== 0) {
           this.endpoints.removeAt(0);
         }

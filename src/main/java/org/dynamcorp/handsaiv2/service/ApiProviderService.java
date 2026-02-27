@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class ApiProviderService {
 
     private final ApiProviderRepository providerRepository;
     private final EncryptionService encryptionService;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<ApiProviderResponse> getAllProviders() {
@@ -42,6 +45,15 @@ public class ApiProviderService {
     public ApiProviderResponse createProvider(CreateApiProviderRequest request) {
         String code = (request.code() != null && !request.code().isBlank()) ? request.code()
                 : java.util.UUID.randomUUID().toString();
+        String customHeadersJson = null;
+        if (request.customHeaders() != null && !request.customHeaders().isEmpty()) {
+            try {
+                customHeadersJson = objectMapper.writeValueAsString(request.customHeaders());
+            } catch (Exception e) {
+                log.error("Failed to serialize customHeaders", e);
+            }
+        }
+
         ApiProvider provider = ApiProvider.builder()
                 .name(request.name())
                 .code(code)
@@ -51,6 +63,7 @@ public class ApiProviderService {
                 .apiKeyName(request.apiKeyName())
                 .apiKeyValue(request.apiKeyValue() != null ? encryptionService.encrypt(request.apiKeyValue()) : null)
                 .isExportable(request.isExportable() != null ? request.isExportable() : false)
+                .customHeadersJson(customHeadersJson)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -82,6 +95,18 @@ public class ApiProviderService {
 
         if (request.isExportable() != null) {
             existingProvider.setExportable(request.isExportable());
+        }
+
+        if (request.customHeaders() != null) {
+            try {
+                if (request.customHeaders().isEmpty()) {
+                    existingProvider.setCustomHeadersJson(null);
+                } else {
+                    existingProvider.setCustomHeadersJson(objectMapper.writeValueAsString(request.customHeaders()));
+                }
+            } catch (Exception e) {
+                log.error("Failed to serialize customHeaders for provider update {}", id, e);
+            }
         }
 
         existingProvider.setUpdatedAt(Instant.now());

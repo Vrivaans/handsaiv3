@@ -33,6 +33,7 @@ public class ApiTool extends BaseModel {
 
     private Instant lastHealthCheck;
     private boolean healthy;
+    private boolean enabled;
 
     @OneToMany(mappedBy = "apiTool", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @lombok.Builder.Default

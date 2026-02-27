@@ -3,6 +3,11 @@ package org.dynamcorp.handsaiv2.dto;
 import org.dynamcorp.handsaiv2.model.ApiKeyLocationEnum;
 import org.dynamcorp.handsaiv2.model.ApiProvider;
 import org.dynamcorp.handsaiv2.model.AuthenticationTypeEnum;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Map;
+import java.util.HashMap;
 
 public record ApiProviderResponse(
         Long id,
@@ -12,9 +17,23 @@ public record ApiProviderResponse(
         AuthenticationTypeEnum authenticationType,
         ApiKeyLocationEnum apiKeyLocation,
         String apiKeyName,
-        boolean isExportable) {
+        boolean isExportable,
+        Map<String, String> customHeaders) {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static ApiProviderResponse from(ApiProvider provider) {
+        Map<String, String> headers = new HashMap<>();
+        if (provider.getCustomHeadersJson() != null && !provider.getCustomHeadersJson().isEmpty()) {
+            try {
+                headers = objectMapper.readValue(provider.getCustomHeadersJson(),
+                        new TypeReference<Map<String, String>>() {
+                        });
+            } catch (Exception e) {
+                // Return empty map on parse error
+            }
+        }
+
         return new ApiProviderResponse(
                 provider.getId(),
                 provider.getName(),
@@ -23,6 +42,7 @@ public record ApiProviderResponse(
                 provider.getAuthenticationType(),
                 provider.getApiKeyLocation(),
                 provider.getApiKeyName(),
-                provider.isExportable());
+                provider.isExportable(),
+                headers);
     }
 }
