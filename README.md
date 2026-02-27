@@ -250,9 +250,11 @@ Con esto, cada vez que lances tu cliente MCP, tendrá acceso a todas las herrami
 
 ### En acción
 
-**Claude Desktop** detectando HandsAI como conector MCP:
+Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Antigravity**:
 
 ![Claude Desktop detectando HandsAI como conector MCP](docs/assets/claude-detecta-handsai.png)
+
+![Antigravity detectando las tools de HandsAI](docs/assets/antigravity-detecta-tools.png)
 
 **Claude** ejecutando una herramienta de HandsAI en tiempo real:
 
