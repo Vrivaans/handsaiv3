@@ -1,43 +1,30 @@
 <div class="container">
   <header>
-    <div>
-      <h1>HandsAI</h1>
-      <p>IA como cerebro, HandsAI como sus manos</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1>HandsAI</h1>
+        <p>IA como cerebro, HandsAI como sus manos</p>
+      </div>
+      <button type="button" class="btn primary" (click)="openExportModal()"
+        style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+        <span style="font-size: 1.2rem;">☁️</span> Exportar Herramientas
+      </button>
     </div>
   </header>
 
   <main>
     <div class="grid">
-      <!-- Active Tools Section -->
-      <div class="card">
-        <div class="card-header">
-          <h2>Herramientas Activas (Agent)</h2>
-          <span class="badge">{{ activeTools.length }}</span>
-        </div>
-        <p class="description">Herramientas disponibles para el agente vía MCP.</p>
-
-        <div class="tool-list">
-          @for (tool of activeTools; track tool.name) {
-          <div class="tool-item">
-            <div class="tool-icon">⚡</div>
-            <div class="tool-content">
-              <h3>{{ tool.name }}</h3>
-              <p>{{ tool.description }}</p>
-            </div>
-          </div>
-          } @empty {
-          <p class="empty-state">No hay herramientas activas.</p>
-          }
-        </div>
-      </div>
-
       <!-- Stored Tools Section -->
+
       <div class="card">
         <div class="card-header">
-          <h2>Herramientas Guardadas (DB)</h2>
-          <span class="badge secondary">{{ storedTools.length }}</span>
+          <h2>Herramientas Guardadas</h2>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 0.8rem; color: #94a3b8;">🟢 Activa &nbsp; ⚪ Inactiva</span>
+            <span class="badge secondary">{{ storedTools.length }}</span>
+          </div>
         </div>
-        <p class="description">Todas las definiciones registradas en la base de datos.</p>
+        <p class="description">Todas las herramientas API registradas. Haz clic en una para editarla.</p>
 
         <div class="tool-list">
           @for (group of groupedStoredTools; track group.providerName) {
@@ -83,13 +70,6 @@
           }
         </div>
       </div>
-    </div>
-
-    <div style="display: flex; justify-content: center; margin-top: 2rem;">
-      <button type="button" class="btn primary" (click)="openExportModal()"
-        style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.2rem;">☁️</span> Exportar Herramientas Públicas
-      </button>
     </div>
   </main>
 
