@@ -69,7 +69,7 @@ public class DynamicTokenManager {
                         });
             }
 
-            String finalUri = "";
+            String finalUri = provider.getDynamicAuthUrl();
             DynamicAuthPayloadLocationEnum location = provider.getDynamicAuthPayloadLocation();
             if (location == null)
                 location = DynamicAuthPayloadLocationEnum.BODY; // default
@@ -78,7 +78,7 @@ public class DynamicTokenManager {
                     && location == DynamicAuthPayloadLocationEnum.QUERY_PARAMETERS) {
                 StringBuilder query = new StringBuilder("?");
                 payloadMap.forEach((k, v) -> query.append(k).append("=").append(v).append("&"));
-                finalUri = query.substring(0, query.length() - 1); // remove last &
+                finalUri += query.substring(0, query.length() - 1); // append to base URL
             }
 
             RestClient.RequestBodySpec requestSpec = client.method(method).uri(finalUri);
