@@ -457,6 +457,21 @@ public class ToolExecutionService {
                     memoryService.deleteKnowledge(getLongParam(params, "id"));
                     resObj = "Knowledge deleted successfully";
                     break;
+                case "handsai_create_task":
+                    resObj = memoryService.createTask(
+                            getStringParam(params, "title"),
+                            getStringParam(params, "description"),
+                            getStringParam(params, "priority"),
+                            getStringParam(params, "createdByAgent"));
+                    break;
+                case "handsai_list_tasks":
+                    resObj = memoryService.listPendingTasks();
+                    break;
+                case "handsai_update_task_status":
+                    resObj = memoryService.updateTaskStatus(
+                            getLongParam(params, "id"),
+                            getStringParam(params, "status")).orElse(null);
+                    break;
                 default:
                     throw new IllegalArgumentException("Unknown native tool: " + request.toolName());
             }
@@ -467,6 +482,7 @@ public class ToolExecutionService {
 
             // Build pseudo log for analytics
             executionLog.setSuccess(true);
+            executionLog.setSystemToolName(request.toolName());
             executionLog.setExecutionTimeMs(executionTime);
             executionLog.setRequestPayload(objectMapper.writeValueAsString(params));
             executionLog.setResponsePayload(objectMapper.writeValueAsString(result));
@@ -480,6 +496,7 @@ public class ToolExecutionService {
             long executionTime = java.time.Duration.between(startTime, java.time.Instant.now()).toMillis();
 
             executionLog.setSuccess(false);
+            executionLog.setSystemToolName(request.toolName());
             executionLog.setErrorMessage(e.getMessage());
             executionLog.setExecutionTimeMs(executionTime);
             executionLog.setExecutedAt(java.time.Instant.now());

@@ -1,0 +1,116 @@
+<div class="container">
+    <div class="grid">
+
+        <!-- Active / Pending Tasks Section -->
+        <div class="card">
+            <div class="card-header" style="justify-content: space-between; align-items: center; display: flex;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <h2 style="margin: 0;">Agent Backlog</h2>
+                    <span class="badge" *ngIf="!loading && !error">{{ tasks.length }}</span>
+                </div>
+                <button (click)="loadTasks()" class="btn text-btn" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                    Refresh List
+                </button>
+            </div>
+            <p class="description">Tareas asíncronas pendientes del agente.</p>
+
+            <div *ngIf="loading" class="flex justify-center items-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a8ff]"></div>
+            </div>
+
+            <div *ngIf="error" class="alert error" style="margin-top: 15px;">{{ error }}</div>
+
+            <div class="tool-list" *ngIf="!loading && !error && tasks.length > 0">
+                <div *ngFor="let task of tasks" class="tool-item" style="display: flex; align-items: flex-start;">
+                    <div class="tool-icon" [title]="task.status"
+                        style="font-size: 1.2rem; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);">
+                        📝
+                    </div>
+
+                    <div class="tool-content" style="flex-grow: 1;">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                            <h3 style="margin: 0; font-size: 1.05rem;">{{ task.title }}</h3>
+                        </div>
+                        <p style="margin: 0 0 8px 0; font-size: 0.9rem; opacity: 0.8;">{{ task.description }}</p>
+
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; opacity: 0.7;">
+                            <span>Agente: {{ task.createdByAgent || 'Unknown' }}</span>
+                            <span>•</span>
+                            <span>{{ task.createdAt | date:'short' }}</span>
+                            <span>•</span>
+                            <span [class]="getPriorityColor(task.priority)"
+                                style="padding: 2px 6px; border-radius: 4px;">{{ task.priority }}</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-status"
+                        style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px; margin-left: 15px;">
+                        <span [class]="getStatusColor(task.status)" class="status-tag">
+                            {{ task.status }}
+                        </span>
+                        <button type="button" class="delete-btn" (click)="deleteTask(task.id)"
+                            style="background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; opacity: 0.7; transition: opacity 0.2s;"
+                            title="Eliminar tarea">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="!loading && !error && tasks.length === 0" class="empty-state">
+                No hay tareas pendientes en el backlog.
+            </div>
+        </div>
+
+        <!-- Completed Tasks Section -->
+        <div class="card" *ngIf="completedTasks.length > 0">
+
+            <details class="provider-group"
+                style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <summary (click)="toggleCompleted()"
+                    style="padding: 15px; cursor: pointer; font-weight: 600; font-size: 1.1rem; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.2rem; transition: transform 0.2s;"
+                            [style.transform]="showCompleted ? 'rotate(90deg)' : 'rotate(0)'">▶</span>
+                        Tareas Completadas
+                    </div>
+                    <span class="badge secondary" style="font-size: 0.8rem;">{{ completedTasks.length }}</span>
+                </summary>
+
+                <div *ngIf="showCompleted"
+                    style="padding: 0 15px 15px 15px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;">
+                    <div *ngFor="let task of completedTasks" class="tool-item"
+                        style="cursor: default; margin: 0; background: rgba(0, 0, 0, 0.2); opacity: 0.75; display: flex; align-items: flex-start;">
+
+                        <div class="tool-icon"
+                            style="font-size: 1.2rem; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                            ✅
+                        </div>
+
+                        <div class="tool-content" style="flex-grow: 1;">
+                            <h3 style="margin: 0 0 4px 0; font-size: 1.05rem;"><del>{{ task.title }}</del></h3>
+                            <p style="margin: 0 0 8px 0; font-size: 0.9rem;">{{ task.description }}</p>
+
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem;">
+                                <span>Agente: {{ task.createdByAgent || 'Unknown' }}</span>
+                                <span>•</span>
+                                <span>Actualizada: {{ task.updatedAt | date:'short' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="tool-status" style="display: flex; align-items: flex-start; margin-left: 15px;">
+                            <button type="button" class="delete-btn" (click)="deleteTask(task.id)"
+                                style="background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; transition: transform 0.2s;"
+                                title="Eliminar tarea">
+                                🗑️
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </details>
+
+        </div>
+    </div>
+</div>

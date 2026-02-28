@@ -193,6 +193,55 @@ public class ToolDiscoveryService {
                                                                                 java.util.Map.of("type", "number",
                                                                                                 "description",
                                                                                                 "ID del conocimiento a eliminar")),
-                                                                "required", List.of("id"))));
+                                                                "required", List.of("id"))),
+                                new ToolDefinition(
+                                                "handsai_create_task",
+                                                "Añade una nueva tarea al backlog asíncrono para ser realizada en el futuro por otro agente o usuario (Task Memory).",
+                                                "system_tool",
+                                                java.util.Map.of(
+                                                                "type", "object",
+                                                                "properties", java.util.Map.of(
+                                                                                "title",
+                                                                                java.util.Map.of("type", "string",
+                                                                                                "description",
+                                                                                                "Título corto de la tarea"),
+                                                                                "description",
+                                                                                java.util.Map.of("type", "string",
+                                                                                                "description",
+                                                                                                "Detalles de lo que hay que hacer o contexto"),
+                                                                                "priority",
+                                                                                java.util.Map.of("type", "string",
+                                                                                                "description",
+                                                                                                "Prioridad: LOW, MEDIUM, HIGH, CRITICAL"),
+                                                                                "createdByAgent",
+                                                                                java.util.Map.of("type", "string",
+                                                                                                "description",
+                                                                                                "Nombre o ID del agente que crea la tarea")),
+                                                                "required",
+                                                                List.of("title", "description"))),
+                                new ToolDefinition(
+                                                "handsai_list_tasks",
+                                                "Obtiene la lista de tareas pendientes (no completadas) en el backlog del sistema.",
+                                                "system_tool",
+                                                java.util.Map.of(
+                                                                "type", "object",
+                                                                "properties", java.util.Map.of())),
+                                new ToolDefinition(
+                                                "handsai_update_task_status",
+                                                "Actualiza el estado de una tarea pendiente en el backlog.",
+                                                "system_tool",
+                                                java.util.Map.of(
+                                                                "type", "object",
+                                                                "properties", java.util.Map.of(
+                                                                                "id",
+                                                                                java.util.Map.of("type", "number",
+                                                                                                "description",
+                                                                                                "ID de la tarea a actualizar"),
+                                                                                "status",
+                                                                                java.util.Map.of("type", "string",
+                                                                                                "description",
+                                                                                                "Nuevo estado: PENDING, IN_PROGRESS, COMPLETED")),
+                                                                "required",
+                                                                List.of("id", "status"))));
         }
 }

@@ -28,6 +28,9 @@ public class MemoryServiceTest {
     @Mock
     private KnowledgeMemoryRepository knowledgeRepository;
 
+    @Mock
+    private org.dynamcorp.handsaiv2.repository.TaskMemoryRepository taskRepository;
+
     @InjectMocks
     private MemoryService memoryService;
 
@@ -104,5 +107,58 @@ public class MemoryServiceTest {
 
         assertEquals(1, results.size());
         verify(knowledgeRepository, times(1)).searchByContentOrTitleIgnoreCase("bugfix");
+    }
+
+    @Test
+    void testCreateTask() {
+        org.dynamcorp.handsaiv2.model.TaskMemory mockTask = new org.dynamcorp.handsaiv2.model.TaskMemory();
+        mockTask.setId(100L);
+        mockTask.setTitle("Test task");
+        mockTask.setStatus("PENDING");
+
+        when(taskRepository.save(any(org.dynamcorp.handsaiv2.model.TaskMemory.class))).thenReturn(mockTask);
+
+        org.dynamcorp.handsaiv2.model.TaskMemory saved = memoryService.createTask("Test task", "desc", "HIGH",
+                "agent-x");
+
+        assertNotNull(saved);
+        assertEquals("PENDING", saved.getStatus());
+        verify(taskRepository, times(1)).save(any(org.dynamcorp.handsaiv2.model.TaskMemory.class));
+    }
+
+    @Test
+    void testListPendingTasks() {
+        org.dynamcorp.handsaiv2.model.TaskMemory mockTask = new org.dynamcorp.handsaiv2.model.TaskMemory();
+        when(taskRepository.findByStatusNotOrderByPriorityDescCreatedAtAsc("COMPLETED"))
+                .thenReturn(List.of(mockTask));
+
+        List<org.dynamcorp.handsaiv2.model.TaskMemory> tasks = memoryService.listPendingTasks();
+
+        assertEquals(1, tasks.size());
+        verify(taskRepository, times(1)).findByStatusNotOrderByPriorityDescCreatedAtAsc("COMPLETED");
+    }
+
+    @Test
+    void testUpdateTaskStatus() {
+        org.dynamcorp.handsaiv2.model.TaskMemory mockTask = new org.dynamcorp.handsaiv2.model.TaskMemory();
+        mockTask.setId(100L);
+        mockTask.setStatus("PENDING");
+
+        when(taskRepository.findById(100L)).thenReturn(Optional.of(mockTask));
+        when(taskRepository.save(any(org.dynamcorp.handsaiv2.model.TaskMemory.class))).thenReturn(mockTask);
+
+        Optional<org.dynamcorp.handsaiv2.model.TaskMemory> updated = memoryService.updateTaskStatus(100L,
+                "IN_PROGRESS");
+
+        assertTrue(updated.isPresent());
+        assertEquals("IN_PROGRESS", updated.get().getStatus());
+        verify(taskRepository, times(1)).save(mockTask);
+    }
+
+    @Test
+    void testDeleteTask() {
+        doNothing().when(taskRepository).deleteById(100L);
+        memoryService.deleteTask(100L);
+        verify(taskRepository, times(1)).deleteById(100L);
     }
 }

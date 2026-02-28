@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.dynamcorp.handsaiv2.model.IntentMemory;
 import org.dynamcorp.handsaiv2.model.KnowledgeCategoryEnum;
 import org.dynamcorp.handsaiv2.model.KnowledgeMemory;
+import org.dynamcorp.handsaiv2.model.TaskMemory;
 import org.dynamcorp.handsaiv2.repository.IntentMemoryRepository;
 import org.dynamcorp.handsaiv2.repository.KnowledgeMemoryRepository;
+import org.dynamcorp.handsaiv2.repository.TaskMemoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class MemoryService {
 
     private final IntentMemoryRepository intentRepository;
     private final KnowledgeMemoryRepository knowledgeRepository;
+    private final org.dynamcorp.handsaiv2.repository.TaskMemoryRepository taskRepository;
 
     // --- Intent Memory (Tactical) ---
 
@@ -129,5 +132,48 @@ public class MemoryService {
     public void deleteKnowledge(Long id) {
         log.warn("Permanently deleting strategic knowledge {}", id);
         knowledgeRepository.deleteById(id);
+    }
+
+    // --- Task Memory (Backlog) ---
+
+    @Transactional
+    public TaskMemory createTask(String title, String description, String priority, String createdByAgent) {
+        log.info("Saving new task: {}", title);
+
+        TaskMemory task = TaskMemory.builder()
+                .title(title)
+                .description(description)
+                .status("PENDING") // Default status
+                .priority(priority != null ? priority : "MEDIUM")
+                .createdByAgent(createdByAgent)
+                .createdAt(Instant.now())
+                .build();
+
+        return taskRepository.save(task);
+    }
+
+    public List<TaskMemory> listPendingTasks() {
+        // Return everything that is not COMPLETED
+        return taskRepository.findByStatusNotOrderByPriorityDescCreatedAtAsc("COMPLETED");
+    }
+
+    public List<TaskMemory> listCompletedTasks() {
+        return taskRepository.findByStatusOrderByCreatedAtDesc("COMPLETED");
+    }
+
+    @Transactional
+    public Optional<TaskMemory> updateTaskStatus(Long id, String status) {
+        return taskRepository.findById(id).map(task -> {
+            task.setStatus(status);
+            task.setUpdatedAt(Instant.now());
+            log.info("Marking task {} as {}", id, status);
+            return taskRepository.save(task);
+        });
+    }
+
+    @Transactional
+    public void deleteTask(Long id) {
+        log.warn("Permanently deleting task {}", id);
+        taskRepository.deleteById(id);
     }
 }

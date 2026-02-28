@@ -17,7 +17,8 @@ public record ToolExecutionLogResponse(
     public static ToolExecutionLogResponse from(ToolExecutionLog log) {
         return new ToolExecutionLogResponse(
                 log.getId(),
-                log.getApiTool() != null ? log.getApiTool().getName() : "Unknown Tool",
+                log.getApiTool() != null ? log.getApiTool().getName()
+                        : (log.getSystemToolName() != null ? log.getSystemToolName() : "Unknown Tool"),
                 log.getSessionId(),
                 log.getRequestPayload(),
                 log.getResponsePayload(),

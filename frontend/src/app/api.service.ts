@@ -61,6 +61,17 @@ export interface McpListResponse {
     };
 }
 
+export interface TaskMemory {
+    id: number;
+    title: string;
+    description: string;
+    status: string;
+    priority: string;
+    createdByAgent: string;
+    createdAt: string;
+    updatedAt?: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -127,5 +138,19 @@ export class ApiService {
 
     getExecutionLogs(page: number = 0, size: number = 20): Observable<PageResponse<ToolExecutionLog>> {
         return this.http.get<PageResponse<ToolExecutionLog>>(`/admin/analytics/logs?page=${page}&size=${size}`);
+    }
+
+    // --- Native Memory Tasks ---
+
+    getPendingTasks(): Observable<TaskMemory[]> {
+        return this.http.get<TaskMemory[]>('/api/v1/memory/tasks');
+    }
+
+    getCompletedTasks(): Observable<TaskMemory[]> {
+        return this.http.get<TaskMemory[]>('/api/v1/memory/tasks/completed');
+    }
+
+    deleteTask(id: number): Observable<void> {
+        return this.http.delete<void>(`/api/v1/memory/tasks/${id}`);
     }
 }

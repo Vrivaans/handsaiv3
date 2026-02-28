@@ -32,5 +32,6 @@ public class ToolExecutionLog extends BaseModel {
     private boolean success;
     @Column(length = 8000)
     private String errorMessage;
+    private String systemToolName;
     private Instant executedAt;
 }
