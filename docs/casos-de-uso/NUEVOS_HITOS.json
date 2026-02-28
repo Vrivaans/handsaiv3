@@ -192,5 +192,43 @@
                 ]
             }
         ]
+    },
+    {
+        "name": "Bluesky API",
+        "code": "bluesky",
+        "baseUrl": "https://bsky.social/xrpc",
+        "authenticationType": "BEARER_TOKEN",
+        "apiKeyLocation": "HEADER",
+        "apiKeyName": "Authorization",
+        "apiKeyValue": "",
+        "isDynamicAuth": true,
+        "dynamicAuthUrl": "https://bsky.social/xrpc/com.atproto.server.createSession",
+        "dynamicAuthMethod": "POST",
+        "dynamicAuthPayloadType": "JSON",
+        "dynamicAuthPayloadLocation": "BODY",
+        "dynamicAuthPayload": "{\"identifier\":\"your_handle.bsky.social\",\"password\":\"your_app_password\"}",
+        "dynamicAuthTokenExtractionPath": "accessJwt",
+        "dynamicAuthInvalidationKeywords": "ExpiredToken,AuthenticationRequired",
+        "customHeaders": {},
+        "tools": [
+            {
+                "name": "Ver Timeline",
+                "code": "bluesky-timeline",
+                "description": "Obtiene las últimas publicaciones del feed de inicio del usuario autenticado en Bluesky.",
+                "endpointPath": "/app.bsky.feed.getTimeline",
+                "httpMethod": "GET",
+                "enabled": true,
+                "isExportable": true,
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "type": "NUMBER",
+                        "description": "Cantidad de posts a recuperar (ej. 10)",
+                        "required": false,
+                        "defaultValue": "10"
+                    }
+                ]
+            }
+        ]
     }
 ]
