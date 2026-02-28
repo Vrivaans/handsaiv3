@@ -298,20 +298,34 @@
                                     </div>
                                     <div formArrayName="parameters">
                                         <div *ngFor="let param of getParameters(i).controls; let j=index"
-                                            [formGroupName]="j" class="param-row-mini">
-                                            <input type="text" formControlName="name" placeholder="Nombre (ej. q)"
-                                                class="param-name">
-                                            <select formControlName="type" class="param-type">
-                                                <option value="STRING">String</option>
-                                                <option value="NUMBER">Number</option>
-                                                <option value="BOOLEAN">Boolean</option>
-                                            </select>
-                                            <label class="param-req"><input type="checkbox" formControlName="required">
-                                                Req.</label>
-                                            <button type="button" class="btn-text-danger"
-                                                (click)="removeParameter(i, j)">×</button>
+                                            [formGroupName]="j" class="param-row-mini"
+                                            style="flex-wrap: wrap; margin-bottom: 1rem; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
+                                            <div style="display: flex; gap: 0.5rem; width: 100%;">
+                                                <input type="text" formControlName="name" placeholder="Nombre (ej. q)"
+                                                    class="param-name">
+                                                <select formControlName="type" class="param-type">
+                                                    <option value="STRING">String</option>
+                                                    <option value="NUMBER">Number</option>
+                                                    <option value="BOOLEAN">Boolean</option>
+                                                </select>
+                                                <label class="param-req" style="min-width: 60px;"><input type="checkbox"
+                                                        formControlName="required">
+                                                    Req.</label>
+                                                <button type="button" class="btn-text-danger"
+                                                    (click)="removeParameter(i, j)">×</button>
+                                            </div>
+                                            <div style="width: 100%; margin-top: 5px;">
+                                                <input type="text" formControlName="description"
+                                                    placeholder="Descripción del parámetro (para la IA)"
+                                                    style="width: 100%; font-size: 0.85rem; padding: 0.4rem; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: #fff;">
+                                            </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="form-group full-width checkbox-group" style="margin-top: 1rem;">
+                                    <input [id]="'enabled-'+i" type="checkbox" formControlName="enabled" />
+                                    <label [for]="'enabled-'+i">Habilitar esta herramienta inmediatamente</label>
                                 </div>
                             </div>
                         </div>

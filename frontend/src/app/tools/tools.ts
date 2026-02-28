@@ -107,6 +107,7 @@ export class ToolsComponent implements OnInit {
       description: [data?.description || '', Validators.required],
       endpointPath: [data?.endpointPath || '', Validators.required],
       httpMethod: [data?.httpMethod || 'GET', Validators.required],
+      enabled: [data?.enabled !== undefined ? data.enabled : true],
       parameters: this.fb.array([])
     });
 
@@ -431,6 +432,7 @@ export class ToolsComponent implements OnInit {
   onSubmit() {
     if (this.batchForm.invalid || this.endpoints.length === 0) {
       this.batchForm.markAllAsTouched();
+      this.errorMessage = 'Por favor, revise que todos los campos requeridos estén completos y que haya al menos un endpoint.';
       return;
     }
 
@@ -503,8 +505,7 @@ export class ToolsComponent implements OnInit {
   private executeBatchCreation(providerId: number | string, endpointsData: any[], isNewProvider: boolean) {
     const apiToolsToCreate: any[] = endpointsData.map((ep: any) => ({
       ...ep,
-      providerId: Number(providerId),
-      enabled: true
+      providerId: Number(providerId)
     }));
 
     this.apiService.createApiToolsBatch(apiToolsToCreate).subscribe({
