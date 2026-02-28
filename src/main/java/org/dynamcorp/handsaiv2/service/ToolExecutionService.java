@@ -11,8 +11,10 @@ import org.dynamcorp.handsaiv2.model.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -31,6 +33,7 @@ public class ToolExecutionService {
     private final ObjectMapper objectMapper;
     private final EncryptionService encryptionService;
     private final org.dynamcorp.handsaiv2.util.LogObfuscator logObfuscator;
+    private final DynamicTokenManager dynamicTokenManager;
 
     public ToolExecuteResponse executeApiTool(ToolExecuteRequest request) {
         log.info("Executing tool: {}", request.toolName());
@@ -62,7 +65,38 @@ public class ToolExecutionService {
             executionLog.setRequestPayload(logObfuscator.obfuscate(requestPayload));
 
             // Ejecutar la llamada a la API externa
-            Object result = executeApiCall(apiTool, request.parameters());
+            String dynamicToken = null;
+            if (apiTool.getProvider().isDynamicAuth()) {
+                dynamicToken = dynamicTokenManager.getToken(apiTool.getProvider());
+            }
+
+            Object result = null;
+            try {
+                result = executeApiCall(apiTool, request.parameters(), dynamicToken);
+                if (apiTool.getProvider().isDynamicAuth() && isResultInvalid(result, apiTool.getProvider())) {
+                    throw new HttpClientErrorException(org.springframework.http.HttpStatus.UNAUTHORIZED,
+                            "Invalidated by keyword");
+                }
+            } catch (Exception e) {
+                boolean isUnauthorized = (e instanceof HttpClientErrorException
+                        && ((HttpClientErrorException) e).getStatusCode().value() == 401);
+                boolean isKeywordInvalid = apiTool.getProvider().isDynamicAuth()
+                        && isExceptionInvalid(e, apiTool.getProvider());
+
+                if (apiTool.getProvider().isDynamicAuth() && (isUnauthorized || isKeywordInvalid)) {
+                    log.warn("Dynamic token expired or invalid for provider {}, fetching new token and retrying",
+                            apiTool.getProvider().getId());
+                    dynamicTokenManager.invalidateToken(apiTool.getProvider().getId());
+                    dynamicToken = dynamicTokenManager.getToken(apiTool.getProvider());
+                    result = executeApiCall(apiTool, request.parameters(), dynamicToken);
+                    if (isResultInvalid(result, apiTool.getProvider())) {
+                        throw new ToolExecutionException(
+                                "Tool execution failed even after token refresh due to invalidation keywords.");
+                    }
+                } else {
+                    throw e;
+                }
+            }
 
             // Convertir el resultado a JSON y ofuscar para el log
             String responsePayload = objectMapper.writeValueAsString(result);
@@ -111,11 +145,11 @@ public class ToolExecutionService {
         }
     }
 
-    private Object executeApiCall(ApiTool apiTool, Map<String, Object> parameters) {
+    private Object executeApiCall(ApiTool apiTool, Map<String, Object> parameters, String dynamicToken) {
         RestClient client = restClientBuilder.baseUrl(apiTool.getProvider().getBaseUrl()).build();
 
         // Preparar parámetros incluyendo autenticación
-        Map<String, Object> finalParameters = prepareParametersWithAuth(apiTool, parameters);
+        Map<String, Object> finalParameters = prepareParametersWithAuth(apiTool, parameters, dynamicToken);
         String uriPath = buildUriWithQueryParams(apiTool, finalParameters);
 
         HttpMethod httpMethod = convertHttpMethod(apiTool.getHttpMethod());
@@ -124,7 +158,7 @@ public class ToolExecutionService {
         RestClient.RequestBodySpec requestSpec = client.method(httpMethod).uri(uriPath);
 
         // Configurar autenticación
-        configureAuthentication(requestSpec, apiTool);
+        configureAuthentication(requestSpec, apiTool, dynamicToken);
 
         // Configurar headers personalizados opcionales
         if (apiTool.getProvider().getCustomHeadersJson() != null
@@ -146,7 +180,7 @@ public class ToolExecutionService {
                     .retrieve()
                     .body(Object.class);
         } else {
-            Map<String, Object> bodyParameters = prepareBodyParameters(apiTool, finalParameters);
+            Map<String, Object> bodyParameters = prepareBodyParameters(apiTool, finalParameters, dynamicToken);
             return requestSpec
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(bodyParameters)
@@ -172,17 +206,19 @@ public class ToolExecutionService {
         }
     }
 
-    private Map<String, Object> prepareParametersWithAuth(ApiTool apiTool, Map<String, Object> originalParameters) {
+    private Map<String, Object> prepareParametersWithAuth(ApiTool apiTool, Map<String, Object> originalParameters,
+            String dynamicToken) {
         Map<String, Object> parameters = new java.util.HashMap<>(originalParameters);
 
         // Añadir API key como parámetro si la localización es QUERY_PARAM
         if (apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
                 apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER &&
-                apiTool.getProvider().getApiKeyName() != null &&
-                apiTool.getProvider().getApiKeyValue() != null) {
+                apiTool.getProvider().getApiKeyName() != null) {
 
-            parameters.put(apiTool.getProvider().getApiKeyName(),
-                    encryptionService.decrypt(apiTool.getProvider().getApiKeyValue()));
+            String token = getEffectiveToken(apiTool.getProvider(), dynamicToken);
+            if (token != null) {
+                parameters.put(apiTool.getProvider().getApiKeyName(), token);
+            }
         }
 
         return parameters;
@@ -251,19 +287,22 @@ public class ToolExecutionService {
                 parameters.containsKey(apiTool.getProvider().getApiKeyName());
     }
 
-    private void configureAuthentication(RestClient.RequestBodySpec requestSpec, ApiTool apiTool) {
-        if (apiTool.getProvider().getAuthenticationType() == null || apiTool.getProvider().getApiKeyValue() == null) {
+    private void configureAuthentication(RestClient.RequestBodySpec requestSpec, ApiTool apiTool, String dynamicToken) {
+        if (apiTool.getProvider().getAuthenticationType() == null) {
             return;
         }
 
+        String token = getEffectiveToken(apiTool.getProvider(), dynamicToken);
+        if (token == null)
+            return;
+
         switch (apiTool.getProvider().getAuthenticationType()) {
             case API_KEY:
-                String apiKey = encryptionService.decrypt(apiTool.getProvider().getApiKeyValue());
                 if (apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.HEADER) {
                     String headerName = apiTool.getProvider().getApiKeyName() != null
                             ? apiTool.getProvider().getApiKeyName()
                             : "X-API-Key";
-                    requestSpec.header(headerName, apiKey);
+                    requestSpec.header(headerName, token);
                 } else if (apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.QUERY_PARAMETER) {
                     // La lógica para añadir la API Key como Query Parameter ahora se maneja en
                     // buildUriWithQueryParams y prepareParametersWithAuth para todos los verbos
@@ -272,13 +311,11 @@ public class ToolExecutionService {
                 break;
 
             case BEARER_TOKEN:
-                String token = encryptionService.decrypt(apiTool.getProvider().getApiKeyValue());
                 requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
                 break;
 
             case BASIC_AUTH:
-                requestSpec.header("Authorization",
-                        "Basic " + encryptionService.decrypt(apiTool.getProvider().getApiKeyValue()));
+                requestSpec.header("Authorization", "Basic " + token);
                 break;
 
             default:
@@ -287,7 +324,8 @@ public class ToolExecutionService {
         }
     }
 
-    private Map<String, Object> prepareBodyParameters(ApiTool apiTool, Map<String, Object> parameters) {
+    private Map<String, Object> prepareBodyParameters(ApiTool apiTool, Map<String, Object> parameters,
+            String dynamicToken) {
         Map<String, Object> bodyParams = new java.util.HashMap<>(parameters);
 
         // Remover parámetros de path ({paramName}) del body
@@ -312,15 +350,52 @@ public class ToolExecutionService {
         // Inyectar API key en el body si la localización es IN_BODY
         if (apiTool.getProvider().getAuthenticationType() == AuthenticationTypeEnum.API_KEY &&
                 apiTool.getProvider().getApiKeyLocation() == ApiKeyLocationEnum.IN_BODY &&
-                apiTool.getProvider().getApiKeyName() != null &&
-                apiTool.getProvider().getApiKeyValue() != null) {
+                apiTool.getProvider().getApiKeyName() != null) {
 
-            // Siempre forzamos el put para que pise cualquier valor dummy
-            // enviado desde el payload del servidor MCP.
-            bodyParams.put(apiTool.getProvider().getApiKeyName(),
-                    encryptionService.decrypt(apiTool.getProvider().getApiKeyValue()));
+            String token = getEffectiveToken(apiTool.getProvider(), dynamicToken);
+            if (token != null) {
+                // Siempre forzamos el put para que pise cualquier valor dummy enviado
+                bodyParams.put(apiTool.getProvider().getApiKeyName(), token);
+            }
         }
 
         return bodyParams;
+    }
+
+    private boolean isResultInvalid(Object result, ApiProvider provider) {
+        if (result == null || provider.getDynamicAuthInvalidationKeywords() == null
+                || provider.getDynamicAuthInvalidationKeywords().isBlank())
+            return false;
+        String responseStr = result.toString().toLowerCase();
+        String[] keywords = provider.getDynamicAuthInvalidationKeywords().toLowerCase().split(",");
+        for (String keyword : keywords) {
+            if (!keyword.trim().isEmpty() && responseStr.contains(keyword.trim()))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean isExceptionInvalid(Exception e, ApiProvider provider) {
+        if (e.getMessage() == null || provider.getDynamicAuthInvalidationKeywords() == null
+                || provider.getDynamicAuthInvalidationKeywords().isBlank())
+            return false;
+        String errorStr = e.getMessage().toLowerCase();
+        if (e instanceof HttpClientErrorException) {
+            errorStr += " " + ((HttpClientErrorException) e).getResponseBodyAsString().toLowerCase();
+        }
+        String[] keywords = provider.getDynamicAuthInvalidationKeywords().toLowerCase().split(",");
+        for (String keyword : keywords) {
+            if (!keyword.trim().isEmpty() && errorStr.contains(keyword.trim()))
+                return true;
+        }
+        return false;
+    }
+
+    private String getEffectiveToken(ApiProvider provider, String dynamicToken) {
+        if (dynamicToken != null)
+            return dynamicToken;
+        if (provider.getApiKeyValue() != null)
+            return encryptionService.decrypt(provider.getApiKeyValue());
+        return null;
     }
 }

@@ -44,6 +44,31 @@ public class ApiProvider extends BaseModel {
      */
     private String apiKeyValue;
 
+    // --- Dynamic Authentication Fields ---
+
+    @Column(columnDefinition = "boolean default false")
+    @lombok.Builder.Default
+    private boolean isDynamicAuth = false;
+
+    private String dynamicAuthUrl;
+
+    @Enumerated(EnumType.STRING)
+    private DynamicAuthMethodEnum dynamicAuthMethod;
+
+    @Column(columnDefinition = "TEXT")
+    private String dynamicAuthPayload;
+
+    @Enumerated(EnumType.STRING)
+    private DynamicAuthPayloadTypeEnum dynamicAuthPayloadType;
+
+    @Enumerated(EnumType.STRING)
+    private DynamicAuthPayloadLocationEnum dynamicAuthPayloadLocation;
+
+    private String dynamicAuthTokenExtractionPath;
+
+    @Column(columnDefinition = "TEXT")
+    private String dynamicAuthInvalidationKeywords;
+
     @OneToMany(mappedBy = "provider", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.Builder.Default
     private List<ApiTool> tools = new ArrayList<>();

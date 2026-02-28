@@ -70,9 +70,24 @@ public class ImportService {
         provider.setName(req.name());
         provider.setBaseUrl(req.baseUrl());
         provider.setAuthenticationType(req.authenticationType());
-        provider.setApiKeyLocation(req.apiKeyLocation());
         provider.setApiKeyName(req.apiKeyName());
         provider.setExportable(true); // Since it was exported/imported
+
+        provider.setDynamicAuth(req.isDynamicAuth() != null ? req.isDynamicAuth() : false);
+        provider.setDynamicAuthUrl(req.dynamicAuthUrl());
+        provider.setDynamicAuthMethod(req.dynamicAuthMethod() != null ? req.dynamicAuthMethod()
+                : org.dynamcorp.handsaiv2.model.DynamicAuthMethodEnum.POST);
+        provider.setDynamicAuthPayloadType(req.dynamicAuthPayloadType() != null ? req.dynamicAuthPayloadType()
+                : org.dynamcorp.handsaiv2.model.DynamicAuthPayloadTypeEnum.JSON);
+        provider.setDynamicAuthPayloadLocation(
+                req.dynamicAuthPayloadLocation() != null ? req.dynamicAuthPayloadLocation()
+                        : org.dynamcorp.handsaiv2.model.DynamicAuthPayloadLocationEnum.BODY);
+        provider.setDynamicAuthPayload(req.dynamicAuthPayload());
+        provider.setDynamicAuthTokenExtractionPath(req.dynamicAuthTokenExtractionPath());
+        provider.setDynamicAuthInvalidationKeywords(
+                req.dynamicAuthInvalidationKeywords() != null && !req.dynamicAuthInvalidationKeywords().isBlank()
+                        ? req.dynamicAuthInvalidationKeywords()
+                        : "invalid_token,token_expired,unauthorized,expired_token");
 
         if (req.apiKeyValue() != null && !req.apiKeyValue().isBlank() && !req.apiKeyValue().equals(MASKED_API_KEY)) {
             provider.setApiKeyValue(encryptionService.encrypt(req.apiKeyValue()));

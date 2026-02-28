@@ -67,6 +67,14 @@ public class ExportService {
                 provider.getApiKeyLocation(),
                 provider.getApiKeyName(),
                 provider.getApiKeyValue() != null ? MASKED_API_KEY : null,
+                provider.isDynamicAuth(),
+                provider.getDynamicAuthUrl(),
+                provider.getDynamicAuthMethod(),
+                provider.getDynamicAuthPayloadType(),
+                provider.getDynamicAuthPayloadLocation(),
+                provider.getDynamicAuthPayload(),
+                provider.getDynamicAuthTokenExtractionPath(),
+                provider.getDynamicAuthInvalidationKeywords(),
                 customHeaders,
                 exportTools);
     }

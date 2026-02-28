@@ -6,6 +6,9 @@ import org.dynamcorp.handsaiv2.model.AuthenticationTypeEnum;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.dynamcorp.handsaiv2.model.DynamicAuthMethodEnum;
+import org.dynamcorp.handsaiv2.model.DynamicAuthPayloadLocationEnum;
+import org.dynamcorp.handsaiv2.model.DynamicAuthPayloadTypeEnum;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -18,7 +21,15 @@ public record ApiProviderResponse(
         ApiKeyLocationEnum apiKeyLocation,
         String apiKeyName,
         boolean isExportable,
-        Map<String, String> customHeaders) {
+        Map<String, String> customHeaders,
+        boolean isDynamicAuth,
+        String dynamicAuthUrl,
+        DynamicAuthMethodEnum dynamicAuthMethod,
+        String dynamicAuthPayload,
+        DynamicAuthPayloadTypeEnum dynamicAuthPayloadType,
+        DynamicAuthPayloadLocationEnum dynamicAuthPayloadLocation,
+        String dynamicAuthTokenExtractionPath,
+        String dynamicAuthInvalidationKeywords) {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -43,6 +54,14 @@ public record ApiProviderResponse(
                 provider.getApiKeyLocation(),
                 provider.getApiKeyName(),
                 provider.isExportable(),
-                headers);
+                headers,
+                provider.isDynamicAuth(),
+                provider.getDynamicAuthUrl(),
+                provider.getDynamicAuthMethod(),
+                provider.getDynamicAuthPayload(),
+                provider.getDynamicAuthPayloadType(),
+                provider.getDynamicAuthPayloadLocation(),
+                provider.getDynamicAuthTokenExtractionPath(),
+                provider.getDynamicAuthInvalidationKeywords());
     }
 }

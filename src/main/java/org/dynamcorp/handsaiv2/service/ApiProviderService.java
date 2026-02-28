@@ -62,6 +62,14 @@ public class ApiProviderService {
                 .apiKeyName(request.apiKeyName())
                 .apiKeyValue(request.apiKeyValue() != null ? encryptionService.encrypt(request.apiKeyValue()) : null)
                 .isExportable(request.isExportable() != null ? request.isExportable() : false)
+                .isDynamicAuth(request.isDynamicAuth() != null ? request.isDynamicAuth() : false)
+                .dynamicAuthUrl(request.dynamicAuthUrl())
+                .dynamicAuthMethod(request.dynamicAuthMethod())
+                .dynamicAuthPayload(request.dynamicAuthPayload())
+                .dynamicAuthPayloadType(request.dynamicAuthPayloadType())
+                .dynamicAuthPayloadLocation(request.dynamicAuthPayloadLocation())
+                .dynamicAuthTokenExtractionPath(request.dynamicAuthTokenExtractionPath())
+                .dynamicAuthInvalidationKeywords(request.dynamicAuthInvalidationKeywords())
                 .customHeadersJson(customHeadersJson)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -97,6 +105,23 @@ public class ApiProviderService {
         if (request.isExportable() != null) {
             existingProvider.setExportable(request.isExportable());
         }
+
+        if (request.isDynamicAuth() != null)
+            existingProvider.setDynamicAuth(request.isDynamicAuth());
+        if (request.dynamicAuthUrl() != null)
+            existingProvider.setDynamicAuthUrl(request.dynamicAuthUrl());
+        if (request.dynamicAuthMethod() != null)
+            existingProvider.setDynamicAuthMethod(request.dynamicAuthMethod());
+        if (request.dynamicAuthPayload() != null)
+            existingProvider.setDynamicAuthPayload(request.dynamicAuthPayload());
+        if (request.dynamicAuthPayloadType() != null)
+            existingProvider.setDynamicAuthPayloadType(request.dynamicAuthPayloadType());
+        if (request.dynamicAuthPayloadLocation() != null)
+            existingProvider.setDynamicAuthPayloadLocation(request.dynamicAuthPayloadLocation());
+        if (request.dynamicAuthTokenExtractionPath() != null)
+            existingProvider.setDynamicAuthTokenExtractionPath(request.dynamicAuthTokenExtractionPath());
+        if (request.dynamicAuthInvalidationKeywords() != null)
+            existingProvider.setDynamicAuthInvalidationKeywords(request.dynamicAuthInvalidationKeywords());
 
         if (request.customHeaders() != null) {
             try {

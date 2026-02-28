@@ -6,13 +6,21 @@ import java.util.List;
 import java.util.Map;
 
 public record ExportApiProviderDto(
-        String name,
-        String code,
-        String baseUrl,
-        AuthenticationTypeEnum authenticationType,
-        ApiKeyLocationEnum apiKeyLocation,
-        String apiKeyName,
-        String apiKeyValue,
-        Map<String, String> customHeaders,
-        List<ExportApiToolDto> tools) {
+                String name,
+                String code,
+                String baseUrl,
+                AuthenticationTypeEnum authenticationType,
+                ApiKeyLocationEnum apiKeyLocation,
+                String apiKeyName,
+                String apiKeyValue,
+                Boolean isDynamicAuth,
+                String dynamicAuthUrl,
+                org.dynamcorp.handsaiv2.model.DynamicAuthMethodEnum dynamicAuthMethod,
+                org.dynamcorp.handsaiv2.model.DynamicAuthPayloadTypeEnum dynamicAuthPayloadType,
+                org.dynamcorp.handsaiv2.model.DynamicAuthPayloadLocationEnum dynamicAuthPayloadLocation,
+                String dynamicAuthPayload,
+                String dynamicAuthTokenExtractionPath,
+                String dynamicAuthInvalidationKeywords,
+                Map<String, String> customHeaders,
+                List<ExportApiToolDto> tools) {
 }

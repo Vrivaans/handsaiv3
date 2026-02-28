@@ -1,268 +1,327 @@
 <div class="container">
     <header>
-        <h1>Agregar Herramientas API</h1>
-        <p>Registra herramientas para que sean descubiertas por la IA.</p>
+        <h1>Herramientas API</h1>
+        <p>Añade y configura tus proveedores y herramientas manualmente o importa de OpenAPI.</p>
     </header>
 
     <main>
-        <div class="tabs">
-            <a routerLink="/tools" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
-                class="tab active">Una a la vez</a>
-            <a routerLink="/tools/batch" class="tab">Múltiples / Importar</a>
-        </div>
-
         <div class="card form-card">
-            <form [formGroup]="toolForm" (ngSubmit)="onSubmit()">
+            <form [formGroup]="batchForm" (ngSubmit)="onSubmit()">
+
+                <!-- OpenAPI & HandsAI Importer Section -->
+                <div class="form-group full-width import-section">
+                    <label for="openapi-json">Importador Rápido (HandsAI JSON u OpenAPI)</label>
+                    <p class="helper-text">Pega el JSON exportado directamente de otro agente HandsAI, o usa un Swagger
+                        2.0 / OpenAPI 3.x y procesaremos las rutas por ti.</p>
+                    <textarea id="openapi-json" [(ngModel)]="openApiJsonText" [ngModelOptions]="{standalone: true}"
+                        rows="4" style="resize: vertical; min-height: 100px;"
+                        placeholder='[ { "name": "API", "tools": [...] } ]   o   { "openapi": "3.0.0", "paths": { ... } }'></textarea>
+                    <button type="button" class="btn secondary" (click)="importOpenApi()" style="margin-top: 0.5rem;">
+                        Procesar JSON
+                    </button>
+                    <div *ngIf="importError" class="error-msg">{{ importError }}</div>
+                    <div *ngIf="importSuccessMessage" class="success-msg">{{ importSuccessMessage }}</div>
+                </div>
+
                 <div class="form-grid">
-                    <!-- Name Section -->
-                    <div class="form-group">
-                        <label for="name">Nombre</label>
-                        <input id="name" type="text" formControlName="name" placeholder="Ej. Servicio de Clima" />
-                        <div *ngIf="toolForm.get('name')?.invalid && toolForm.get('name')?.touched" class="error-msg">
-                            Este campo es obligatorio.
+                    <div class="form-group full-width section-title">
+                        <h3>1. Configuración del Proveedor (Base)</h3>
+                        <div class="checkbox-group" style="margin-top: 1rem; margin-bottom: 0.5rem;">
+                            <label class="checkbox-label"
+                                style="font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" formControlName="isCreatingProvider"
+                                    style="width: auto; height: 16px; margin: 0; cursor: pointer;">
+                                Crear nuevo proveedor para todas estas herramientas
+                            </label>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="code">Código Único (Opcional)</label>
-                        <input id="code" type="text" formControlName="code" placeholder="Ej. clima-api" />
-                    </div>
-
-                    <!-- Description Section -->
-                    <div class="form-group full-width">
-                        <label for="description">Descripción</label>
-                        <textarea id="description" formControlName="description" rows="3"
-                            placeholder="Descripción detallada de para qué sirve esta herramienta y cuándo usarla..."></textarea>
-                        <div *ngIf="toolForm.get('description')?.invalid && toolForm.get('description')?.touched"
-                            class="error-msg">
-                            Este campo es obligatorio.
-                        </div>
-                    </div>
-
-                    <!-- Provider Section -->
-                    <div class="form-group full-width section-title"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
-                        <h3 style="margin: 0;">Proveedor API</h3>
-                        <div class="checkbox-group inline" style="margin: 0;">
-                            <input id="isCreatingProvider" type="checkbox" formControlName="isCreatingProvider" />
-                            <label for="isCreatingProvider"
-                                style="font-weight: normal; margin-left: 0.5rem; cursor: pointer;">Crear nuevo
-                                proveedor</label>
-                        </div>
-                    </div>
-
-                    <ng-container *ngIf="!toolForm.get('isCreatingProvider')?.value">
+                    <!-- Use Existing Provider -->
+                    <ng-container *ngIf="!batchForm.get('isCreatingProvider')?.value">
                         <div class="form-group full-width">
-                            <label for="providerId">Seleccionar Proveedor</label>
+                            <label for="providerId">Seleccionar Proveedor Existente</label>
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <select id="providerId" formControlName="providerId" style="flex: 1;">
-                                    <option value="">-- Elige un Proveedor --</option>
-                                    <option *ngFor="let p of providers" [value]="p.id">{{ p.name }} ({{ p.baseUrl }})
+                                <select id="providerId" formControlName="providerId" class="select-field"
+                                    style="flex: 1;">
+                                    <option value="" disabled selected>-- Elige un proveedor --</option>
+                                    <option *ngFor="let p of providers" [value]="p.id">
+                                        {{ p.name }} ({{ p.baseUrl }})
                                     </option>
                                 </select>
-                                <button type="button" class="btn secondary" *ngIf="toolForm.get('providerId')?.value"
+                                <button type="button" class="btn secondary" *ngIf="batchForm.get('providerId')?.value"
                                     (click)="openEditProviderModal()"
                                     style="padding: 0.5rem 1rem; border-radius: 6px; display: flex; align-items: center; justify-content: center;"
                                     title="Editar Proveedor Seleccionado">✏️</button>
                             </div>
-                            <p class="helper-text" *ngIf="providers.length === 0"
-                                style="color: #ffaa00; margin-top: 0.5rem;">
-                                No hay proveedores creados. Marca la casilla de arriba para crear uno nuevo.
-                            </p>
-                            <div *ngIf="toolForm.get('providerId')?.invalid && toolForm.get('providerId')?.touched"
-                                class="error-msg">
-                                Debe seleccionar un proveedor o crear uno nuevo.
-                            </div>
                         </div>
                     </ng-container>
 
-                    <ng-container *ngIf="toolForm.get('isCreatingProvider')?.value">
-                        <div class="form-group full-width"
-                            style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <!-- Create New Provider -->
+                    <ng-container *ngIf="batchForm.get('isCreatingProvider')?.value">
+                        <div class="form-group">
+                            <label for="providerName">Nombre del Proveedor (Ej. OpenWeatherMap)</label>
+                            <input id="providerName" type="text" formControlName="providerName"
+                                placeholder="Ej. OpenWeatherMap API" />
+                        </div>
 
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="providerName">Nombre del Proveedor</label>
-                                    <input id="providerName" type="text" formControlName="providerName"
-                                        placeholder="Ej. Stripe API" />
-                                </div>
+                        <div class="form-group">
+                            <label for="providerCode">Código Único (Opcional)</label>
+                            <input id="providerCode" type="text" formControlName="providerCode"
+                                placeholder="Ej. owm-api" />
+                        </div>
 
-                                <div class="form-group">
-                                    <label for="providerCode">Código Único (Opcional)</label>
-                                    <input id="providerCode" type="text" formControlName="providerCode"
-                                        placeholder="Ej. stripe-api" />
-                                </div>
+                        <div class="form-group full-width">
+                            <label for="baseUrl">URL Base</label>
+                            <input id="baseUrl" type="url" formControlName="baseUrl"
+                                placeholder="Ej. https://api.weatherapi.com" />
+                        </div>
 
-                                <div class="form-group">
-                                    <label for="baseUrl">URL Base</label>
-                                    <input id="baseUrl" type="url" formControlName="baseUrl"
-                                        placeholder="Ej. https://api.stripe.com" />
-                                </div>
+                        <div class="form-group">
+                            <label for="authenticationType">Tipo de Autenticación</label>
+                            <select id="authenticationType" formControlName="authenticationType">
+                                <option value="NONE">Sin Autenticación</option>
+                                <option value="API_KEY">API Key</option>
+                                <option value="BEARER_TOKEN">Bearer Token</option>
+                                <option value="BASIC">Basic Auth</option>
+                            </select>
+                        </div>
 
-                                <div class="form-group">
-                                    <label for="authenticationType">Tipo de Autenticación</label>
-                                    <select id="authenticationType" formControlName="authenticationType">
-                                        <option value="NONE">Sin Autenticación</option>
-                                        <option value="API_KEY">API Key</option>
-                                        <option value="BEARER_TOKEN">Bearer Token</option>
-                                        <option value="BASIC">Basic Auth</option>
-                                    </select>
-                                </div>
+                        <ng-container *ngIf="batchForm.get('authenticationType')?.value !== 'NONE'">
+                            <div class="form-group">
+                                <label for="apiKeyLocation">Ubicación (API Key)</label>
+                                <select id="apiKeyLocation" formControlName="apiKeyLocation">
+                                    <option value="HEADER">Header</option>
+                                    <option value="QUERY_PARAMETER">Query Parameter</option>
+                                    <option value="IN_BODY">En Body (JSON)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="apiKeyName">Nombre de la clave</label>
+                                <input id="apiKeyName" type="text" formControlName="apiKeyName"
+                                    placeholder="Ej. Authorization / x-api-key" />
+                            </div>
+                            <div class="form-group">
+                                <label for="apiKeyValue">Valor (Secreto)</label>
+                                <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
+                                    placeholder="Valor del token" />
+                            </div>
+                        </ng-container>
 
-                                <div></div> <!-- Spacer for grid -->
+                        <div class="form-group full-width" style="margin-top: 1rem;">
+                            <details
+                                style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
+                                <summary style="cursor: pointer; font-weight: 500; outline: none; padding: 0.5rem 0;">
+                                    Opciones Avanzadas (Custom Headers)
+                                </summary>
+                                <div
+                                    style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <p class="helper-text" style="margin-bottom: 1rem;">Agrega headers personalizados
+                                        adicionales para este proveedor que se enviarán en cada petición.</p>
+                                    <button type="button" class="btn secondary" (click)="addCustomHeader()"
+                                        style="margin-bottom: 1rem; padding: 0.4rem 0.8rem; font-size: 0.9rem;">+ Añadir
+                                        Header</button>
 
-                                <ng-container *ngIf="toolForm.get('authenticationType')?.value !== 'NONE'">
-                                    <div class="form-group">
-                                        <label for="apiKeyLocation">Ubicación (API Key)</label>
-                                        <select id="apiKeyLocation" formControlName="apiKeyLocation">
-                                            <option value="HEADER">Header</option>
-                                            <option value="QUERY_PARAMETER">Query Parameter</option>
-                                            <option value="IN_BODY">En Body (JSON)</option>
-                                        </select>
+                                    <div formArrayName="customHeaders">
+                                        <div *ngFor="let header of customHeaders.controls; let idx=index"
+                                            [formGroupName]="idx"
+                                            style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
+                                            <input type="text" formControlName="key"
+                                                placeholder="Key (ej. X-Custom-Header)" style="flex: 1;">
+                                            <input type="text" formControlName="value" placeholder="Value"
+                                                style="flex: 1;">
+                                            <button type="button" class="btn delete-btn"
+                                                (click)="removeCustomHeader(idx)"
+                                                style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
+                                        </div>
                                     </div>
+                                </div>
+                            </details>
+                        </div>
 
-                                    <div class="form-group">
-                                        <label for="apiKeyName">Nombre de la clave</label>
-                                        <input id="apiKeyName" type="text" formControlName="apiKeyName"
-                                            placeholder="Ej. Authorization / x-api-key" />
+                        <!-- Dynamic Auth Section -->
+                        <div class="form-group full-width" style="margin-top: 1rem;">
+                            <details
+                                style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
+                                <summary
+                                    style="cursor: pointer; font-weight: 500; outline: none; padding: 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Autenticación Dinámica (Token Exchange)</span>
+                                    <div class="checkbox-group inline" style="margin: 0;"
+                                        (click)="$event.stopPropagation()">
+                                        <input id="isDynamicAuth" type="checkbox" formControlName="isDynamicAuth" />
+                                        <label for="isDynamicAuth"
+                                            style="font-weight: normal; margin-left: 0.5rem; cursor: pointer;">Habilitar</label>
                                     </div>
+                                </summary>
 
-                                    <div class="form-group full-width">
-                                        <label for="apiKeyValue">Valor del Secreto (API Key / Token)</label>
-                                        <input id="apiKeyValue" type="password" formControlName="apiKeyValue"
-                                            placeholder="Valor del token" />
-                                    </div>
+                                <div *ngIf="batchForm.get('isDynamicAuth')?.value"
+                                    style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <p class="helper-text" style="margin-bottom: 1rem;">Configura la obtención
+                                        automática de tokens de acceso antes de ejecutar la herramienta.</p>
 
-                                    <div class="form-group full-width checkbox-group" style="margin-top: 1rem;">
-                                        <input id="providerIsExportable" type="checkbox"
-                                            formControlName="providerIsExportable" />
-                                        <label for="providerIsExportable">Hacer que este proveedor sea público
-                                            (Exportable)</label>
-                                        <span class="helper-text"
-                                            style="display:block; margin-left: 28px; font-size: 0.85rem; color: #888;">Permite
-                                            compartir este proveedor con otros agentes en el marketplace (las API Keys
-                                            se mantendrán privadas).</span>
-                                    </div>
-                                </ng-container>
+                                    <div class="form-grid">
+                                        <div class="form-group full-width">
+                                            <label for="dynamicAuthUrl">URL del Endpoint de Autenticación</label>
+                                            <input id="dynamicAuthUrl" type="url" formControlName="dynamicAuthUrl"
+                                                placeholder="Ej. https://api.ejemplo.com/oauth/token" />
+                                        </div>
 
-                                <div class="form-group full-width" style="margin-top: 1rem;">
-                                    <details
-                                        style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
-                                        <summary
-                                            style="cursor: pointer; font-weight: 500; outline: none; padding: 0.5rem 0;">
-                                            Opciones Avanzadas (Custom Headers)
-                                        </summary>
-                                        <div
-                                            style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                                            <p class="helper-text" style="margin-bottom: 1rem;">Agrega headers
-                                                personalizados adicionales para este proveedor que se enviarán en
-                                                cada petición.</p>
-                                            <button type="button" class="btn secondary" (click)="addCustomHeader()"
+                                        <div class="form-group">
+                                            <label for="dynamicAuthMethod">Método HTTP</label>
+                                            <select id="dynamicAuthMethod" formControlName="dynamicAuthMethod">
+                                                <option value="POST">POST</option>
+                                                <option value="GET">GET</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="dynamicAuthPayloadLocation">Ubicación del Payload</label>
+                                            <select id="dynamicAuthPayloadLocation"
+                                                formControlName="dynamicAuthPayloadLocation">
+                                                <option value="BODY">Body</option>
+                                                <option value="QUERY_PARAMETERS">Query Parameters</option>
+                                                <option value="HEADERS">Headers</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group"
+                                            *ngIf="batchForm.get('dynamicAuthPayloadLocation')?.value === 'BODY'">
+                                            <label for="dynamicAuthPayloadType">Tipo de Payload</label>
+                                            <select id="dynamicAuthPayloadType"
+                                                formControlName="dynamicAuthPayloadType">
+                                                <option value="JSON">application/json</option>
+                                                <option value="FORM_DATA">application/x-www-form-urlencoded</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group"
+                                            *ngIf="batchForm.get('dynamicAuthPayloadLocation')?.value !== 'BODY'"></div>
+
+                                        <div class="form-group full-width" style="margin-top: 1rem;">
+                                            <label>Payload Params (Key-Value)</label>
+                                            <p class="helper-text"
+                                                style="margin-bottom: 0.5rem; font-size: 0.8rem; opacity: 0.8;">
+                                                Agrega las claves y valores que formarán el cuerpo de la petición.
+                                            </p>
+                                            <button type="button" class="btn secondary"
+                                                (click)="addDynamicAuthPayload()"
                                                 style="margin-bottom: 1rem; padding: 0.4rem 0.8rem; font-size: 0.9rem;">+
-                                                Añadir Header</button>
+                                                Añadir Parámetro</button>
 
-                                            <div formArrayName="customHeaders">
-                                                <div *ngFor="let header of customHeaders.controls; let idx=index"
+                                            <div formArrayName="dynamicAuthPayload">
+                                                <div *ngFor="let payload of dynamicAuthPayload.controls; let idx=index"
                                                     [formGroupName]="idx"
                                                     style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
                                                     <input type="text" formControlName="key"
-                                                        placeholder="Key (ej. X-Custom-Header)" style="flex: 1;">
-                                                    <input type="text" formControlName="value" placeholder="Value"
-                                                        style="flex: 1;">
+                                                        placeholder="Key (ej. client_id)" style="flex: 1;">
+                                                    <input type="text" formControlName="value"
+                                                        placeholder="Value (ej. 12345)" style="flex: 1;">
                                                     <button type="button" class="btn delete-btn"
-                                                        (click)="removeCustomHeader(idx)"
+                                                        (click)="removeDynamicAuthPayload(idx)"
                                                         style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </details>
+
+                                        <div class="form-group">
+                                            <label for="dynamicAuthTokenExtractionPath">JSON Path del Token</label>
+                                            <input id="dynamicAuthTokenExtractionPath" type="text"
+                                                formControlName="dynamicAuthTokenExtractionPath"
+                                                placeholder="Ej. access_token o data.token" />
+                                            <span class="helper-text"
+                                                style="font-size: 0.8rem; display: block; margin-top: 4px;">(Dejar vacío
+                                                si devuelve texto plano)</span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="dynamicAuthInvalidationKeywords">Palabras clave de
+                                                Invalidez</label>
+                                            <input id="dynamicAuthInvalidationKeywords" type="text"
+                                                formControlName="dynamicAuthInvalidationKeywords"
+                                                placeholder="invalid_token, expired" />
+                                            <span class="helper-text"
+                                                style="font-size: 0.8rem; display: block; margin-top: 4px;">Forzará
+                                                reintento si sucede (por comas).</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </details>
                         </div>
                     </ng-container>
 
-                    <div class="form-group">
-                        <label for="endpointPath">Ruta (Path)</label>
-                        <input id="endpointPath" type="text" formControlName="endpointPath"
-                            placeholder="Ej. /v1/current.json" />
-                        <div *ngIf="toolForm.get('endpointPath')?.invalid && toolForm.get('endpointPath')?.touched"
-                            class="error-msg">
-                            Este campo es obligatorio.
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="httpMethod">Método HTTP</label>
-                        <select id="httpMethod" formControlName="httpMethod">
-                            <option value="GET">GET</option>
-                            <option value="POST">POST</option>
-                            <option value="PUT">PUT</option>
-                            <option value="DELETE">DELETE</option>
-                            <option value="PATCH">PATCH</option>
-                        </select>
-                    </div>
-
-
-
-                    <!-- Status -->
-                    <div class="form-group full-width checkbox-group">
-                        <input id="enabled" type="checkbox" formControlName="enabled" />
-                        <label for="enabled">Habilitar esta herramienta de inmediato</label>
-                    </div>
-
-                    <div class="form-group full-width checkbox-group" style="margin-top: 0.5rem; margin-bottom: 2rem;">
-                        <input id="isExportable" type="checkbox" formControlName="isExportable" />
-                        <label for="isExportable">Hacer esta herramienta pública (Exportable)</label>
-                    </div>
-
-                    <!-- Parameters Section -->
+                    <!-- Endpoints Section -->
                     <div class="form-group full-width section-title">
                         <div class="section-header">
-                            <h3>Parámetros</h3>
-                            <button type="button" class="btn secondary" (click)="addParameter()">+ Añadir
-                                Parámetro</button>
-                        </div>
-
-                        <div formArrayName="parameters" class="parameters-list">
-                            <div *ngFor="let param of parameters.controls; let i=index" [formGroupName]="i"
-                                class="parameter-row card">
-
-                                <div class="param-fields">
-                                    <div class="form-group">
-                                        <label>Nombre del Parámetro</label>
-                                        <input type="text" formControlName="name" placeholder="Ej. q">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>Tipo</label>
-                                        <select formControlName="type">
-                                            <option value="STRING">String</option>
-                                            <option value="NUMBER">Number</option>
-                                            <option value="BOOLEAN">Boolean</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group full-width">
-                                        <label>Descripción del parámetro</label>
-                                        <input type="text" formControlName="description"
-                                            placeholder="Ej. Nombre de la ciudad">
-                                    </div>
-
-                                    <div class="form-group checkbox-group pb-0">
-                                        <input type="checkbox" [id]="'required-'+i" formControlName="required" />
-                                        <label [for]="'required-'+i">Requerido</label>
-                                    </div>
-                                </div>
-
-                                <button type="button" class="btn delete-btn" (click)="removeParameter(i)"
-                                    title="Eliminar parámetro">🗑️</button>
-                            </div>
-
-                            <div *ngIf="parameters.controls.length === 0" class="empty-state">
-                                <p>No se han definido parámetros adicionales para esta herramienta.</p>
-                            </div>
+                            <h3>2. Endpoints a Crear ({{ endpoints.length }})</h3>
+                            <button type="button" class="btn secondary" (click)="addEndpoint()">+ Añadir
+                                Manualmente</button>
                         </div>
                     </div>
+
+                    <div formArrayName="endpoints" class="full-width endpoints-list">
+                        <div *ngFor="let ep of endpoints.controls; let i=index" [formGroupName]="i"
+                            class="endpoint-card">
+                            <div class="endpoint-header">
+                                <select formControlName="httpMethod" class="method-badge"
+                                    [ngClass]="ep.get('httpMethod')?.value" title="Cambiar Método">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                    <option value="PATCH">PATCH</option>
+                                </select>
+                                <input type="text" formControlName="endpointPath" class="inline-input path-input"
+                                    placeholder="Path ej. /v1/current.json">
+                                <button type="button" class="btn delete-btn" (click)="removeEndpoint(i)"
+                                    title="Eliminar endpoint">🗑️</button>
+                            </div>
+
+                            <div class="endpoint-body">
+                                <div class="form-group">
+                                    <label>Nombre de la herramienta</label>
+                                    <input type="text" formControlName="name" placeholder="Ej. Obtener Clima Actual">
+                                </div>
+                                <div class="form-group">
+                                    <label>Código Único (Opcional)</label>
+                                    <input type="text" formControlName="code" placeholder="Ej. get-weather-current">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Descripción detallada</label>
+                                    <textarea formControlName="description" rows="2"
+                                        placeholder="Describe para qué sirve..."></textarea>
+                                </div>
+
+                                <!-- Endpoint Parameters -->
+                                <div class="parameters-mini-list full-width">
+                                    <div class="section-header-mini">
+                                        <label>Parámetros ({{ getParameters(i).length }})</label>
+                                        <button type="button" class="btn small" (click)="addParameter(i)">+
+                                            Param</button>
+                                    </div>
+                                    <div formArrayName="parameters">
+                                        <div *ngFor="let param of getParameters(i).controls; let j=index"
+                                            [formGroupName]="j" class="param-row-mini">
+                                            <input type="text" formControlName="name" placeholder="Nombre (ej. q)"
+                                                class="param-name">
+                                            <select formControlName="type" class="param-type">
+                                                <option value="STRING">String</option>
+                                                <option value="NUMBER">Number</option>
+                                                <option value="BOOLEAN">Boolean</option>
+                                            </select>
+                                            <label class="param-req"><input type="checkbox" formControlName="required">
+                                                Req.</label>
+                                            <button type="button" class="btn-text-danger"
+                                                (click)="removeParameter(i, j)">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="endpoints.controls.length === 0" class="empty-state">
+                            <p>No hay endpoints definidos. Importa un JSON de OpenAPI arriba o añade uno manualmente.
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="form-actions">
@@ -270,9 +329,9 @@
                     <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
 
                     <button type="button" class="btn ghost" routerLink="/home">Cancelar</button>
-                    <button type="submit" class="btn primary" [disabled]="isSubmitting || toolForm.invalid">
-                        <span *ngIf="!isSubmitting">Guardar Herramienta</span>
-                        <span *ngIf="isSubmitting">Guardando...</span>
+                    <button type="submit" class="btn primary" [disabled]="isSubmitting || endpoints.length === 0">
+                        <span *ngIf="!isSubmitting">Guardar Todo</span>
+                        <span *ngIf="isSubmitting">Guardando Batch...</span>
                     </button>
                 </div>
             </form>
@@ -365,9 +424,108 @@
                     </details>
                 </div>
 
-                <div class="form-group checkbox-group" style="margin-top: 1.5rem;">
-                    <input id="editIsExportable" type="checkbox" formControlName="isExportable" />
-                    <label for="editIsExportable">Proveedor público (Exportable)</label>
+                <!-- Dynamic Auth Section (Edit) -->
+                <div class="form-group full-width" style="margin-top: 1rem;">
+                    <details
+                        style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
+                        <summary
+                            style="cursor: pointer; font-weight: 500; outline: none; padding: 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Autenticación Dinámica (Token Exchange)</span>
+                            <div class="checkbox-group inline" style="margin: 0;" (click)="$event.stopPropagation()">
+                                <input id="editIsDynamicAuth" type="checkbox" formControlName="isDynamicAuth" />
+                                <label for="editIsDynamicAuth"
+                                    style="font-weight: normal; margin-left: 0.5rem; cursor: pointer;">Habilitar</label>
+                            </div>
+                        </summary>
+
+                        <div *ngIf="editProviderForm.get('isDynamicAuth')?.value"
+                            style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <p class="helper-text" style="margin-bottom: 1rem;">Configura la obtención automática de
+                                tokens de acceso antes de ejecutar la herramienta.</p>
+
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="editDynamicAuthUrl">URL del Endpoint de Autenticación</label>
+                                    <input id="editDynamicAuthUrl" type="url" formControlName="dynamicAuthUrl"
+                                        placeholder="Ej. https://api.ejemplo.com/oauth/token" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editDynamicAuthMethod">Método HTTP</label>
+                                    <select id="editDynamicAuthMethod" formControlName="dynamicAuthMethod">
+                                        <option value="POST">POST</option>
+                                        <option value="GET">GET</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editDynamicAuthPayloadLocation">Ubicación del Payload</label>
+                                    <select id="editDynamicAuthPayloadLocation"
+                                        formControlName="dynamicAuthPayloadLocation">
+                                        <option value="BODY">Body</option>
+                                        <option value="QUERY_PARAMETERS">Query Parameters</option>
+                                        <option value="HEADERS">Headers</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group"
+                                    *ngIf="editProviderForm.get('dynamicAuthPayloadLocation')?.value === 'BODY'">
+                                    <label for="editDynamicAuthPayloadType">Tipo de Payload</label>
+                                    <select id="editDynamicAuthPayloadType" formControlName="dynamicAuthPayloadType">
+                                        <option value="JSON">application/json</option>
+                                        <option value="FORM_DATA">application/x-www-form-urlencoded</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"
+                                    *ngIf="editProviderForm.get('dynamicAuthPayloadLocation')?.value !== 'BODY'"></div>
+
+                                <div class="form-group full-width" style="margin-top: 1rem;">
+                                    <label>Payload Params (Key-Value)</label>
+                                    <p class="helper-text"
+                                        style="margin-bottom: 0.5rem; font-size: 0.8rem; opacity: 0.8;">
+                                        Agrega las claves y valores que formarán el cuerpo de la petición.
+                                    </p>
+                                    <button type="button" class="btn secondary" (click)="addEditDynamicAuthPayload()"
+                                        style="margin-bottom: 1rem; padding: 0.4rem 0.8rem; font-size: 0.9rem;">+ Añadir
+                                        Parámetro</button>
+
+                                    <div formArrayName="dynamicAuthPayload">
+                                        <div *ngFor="let payload of editDynamicAuthPayload.controls; let idx=index"
+                                            [formGroupName]="idx"
+                                            style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
+                                            <input type="text" formControlName="key" placeholder="Key (ej. client_id)"
+                                                style="flex: 1;">
+                                            <input type="text" formControlName="value" placeholder="Value (ej. 12345)"
+                                                style="flex: 1;">
+                                            <button type="button" class="btn delete-btn"
+                                                (click)="removeEditDynamicAuthPayload(idx)"
+                                                style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editDynamicAuthTokenExtractionPath">JSON Path del Token</label>
+                                    <input id="editDynamicAuthTokenExtractionPath" type="text"
+                                        formControlName="dynamicAuthTokenExtractionPath"
+                                        placeholder="Ej. access_token o data.token" />
+                                    <span class="helper-text"
+                                        style="font-size: 0.8rem; display: block; margin-top: 4px;">(Dejar vacío si
+                                        devuelve texto plano)</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editDynamicAuthInvalidationKeywords">Palabras clave de Invalidez</label>
+                                    <input id="editDynamicAuthInvalidationKeywords" type="text"
+                                        formControlName="dynamicAuthInvalidationKeywords"
+                                        placeholder="invalid_token, expired" />
+                                    <span class="helper-text"
+                                        style="font-size: 0.8rem; display: block; margin-top: 4px;">Forzará reintento si
+                                        sucede (por comas).</span>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <div *ngIf="editProviderError" class="alert error" style="margin-top: 1rem;">
