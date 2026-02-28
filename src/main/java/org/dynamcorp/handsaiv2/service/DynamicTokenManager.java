@@ -67,6 +67,13 @@ public class DynamicTokenManager {
                 payloadMap = objectMapper.readValue(provider.getDynamicAuthPayload(),
                         new TypeReference<Map<String, Object>>() {
                         });
+                
+                // Decrypt payload values
+                for (Map.Entry<String, Object> entry : payloadMap.entrySet()) {
+                    if (entry.getValue() instanceof String strVal && !strVal.isBlank()) {
+                        entry.setValue(encryptionService.decrypt(strVal));
+                    }
+                }
             }
 
             String finalUri = provider.getDynamicAuthUrl();

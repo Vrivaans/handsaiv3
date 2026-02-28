@@ -173,7 +173,10 @@ public class ToolExecutionService {
                 Map<String, String> customHeaders = objectMapper.readValue(apiTool.getProvider().getCustomHeadersJson(),
                         new TypeReference<Map<String, String>>() {
                         });
-                customHeaders.forEach(requestSpec::header);
+                customHeaders.forEach((k, v) -> {
+                    String decryptedValue = (v != null && !v.isBlank()) ? encryptionService.decrypt(v) : v;
+                    requestSpec.header(k, decryptedValue);
+                });
             } catch (Exception e) {
                 log.warn("Failed to parse customHeadersJson for tool execution: {}",
                         apiTool.getProvider().getCustomHeadersJson(), e);

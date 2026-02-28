@@ -65,12 +65,12 @@ public class ApiProviderService {
                 .isDynamicAuth(request.isDynamicAuth() != null ? request.isDynamicAuth() : false)
                 .dynamicAuthUrl(request.dynamicAuthUrl())
                 .dynamicAuthMethod(request.dynamicAuthMethod())
-                .dynamicAuthPayload(request.dynamicAuthPayload())
+                .dynamicAuthPayload(encryptMapJson(request.dynamicAuthPayload()))
                 .dynamicAuthPayloadType(request.dynamicAuthPayloadType())
                 .dynamicAuthPayloadLocation(request.dynamicAuthPayloadLocation())
                 .dynamicAuthTokenExtractionPath(request.dynamicAuthTokenExtractionPath())
                 .dynamicAuthInvalidationKeywords(request.dynamicAuthInvalidationKeywords())
-                .customHeadersJson(customHeadersJson)
+                .customHeadersJson(encryptMapJson(customHeadersJson))
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -113,7 +113,7 @@ public class ApiProviderService {
         if (request.dynamicAuthMethod() != null)
             existingProvider.setDynamicAuthMethod(request.dynamicAuthMethod());
         if (request.dynamicAuthPayload() != null)
-            existingProvider.setDynamicAuthPayload(request.dynamicAuthPayload());
+            existingProvider.setDynamicAuthPayload(encryptMapJson(request.dynamicAuthPayload()));
         if (request.dynamicAuthPayloadType() != null)
             existingProvider.setDynamicAuthPayloadType(request.dynamicAuthPayloadType());
         if (request.dynamicAuthPayloadLocation() != null)
@@ -128,7 +128,8 @@ public class ApiProviderService {
                 if (request.customHeaders().isEmpty()) {
                     existingProvider.setCustomHeadersJson(null);
                 } else {
-                    existingProvider.setCustomHeadersJson(objectMapper.writeValueAsString(request.customHeaders()));
+                    String rawJson = objectMapper.writeValueAsString(request.customHeaders());
+                    existingProvider.setCustomHeadersJson(encryptMapJson(rawJson));
                 }
             } catch (Exception e) {
                 log.error("Failed to serialize customHeaders for provider update {}", id, e);
@@ -148,5 +149,28 @@ public class ApiProviderService {
         }
         providerRepository.deleteById(id);
         toolCacheManager.refreshCache();
+    }
+
+    private String encryptMapJson(String jsonString) {
+        if (jsonString == null || jsonString.isBlank()) {
+            return jsonString;
+        }
+        try {
+            java.util.Map<String, String> map = objectMapper.readValue(jsonString,
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>() {
+                    });
+            java.util.Map<String, String> encryptedMap = new java.util.HashMap<>();
+            for (java.util.Map.Entry<String, String> entry : map.entrySet()) {
+                if (entry.getValue() != null && !entry.getValue().isBlank()) {
+                    encryptedMap.put(entry.getKey(), encryptionService.encrypt(entry.getValue()));
+                } else {
+                    encryptedMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+            return objectMapper.writeValueAsString(encryptedMap);
+        } catch (Exception e) {
+            log.warn("Failed to parse and encrypt json map. Returning original.", e);
+            return jsonString;
+        }
     }
 }

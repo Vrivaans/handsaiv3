@@ -40,26 +40,44 @@
         <p class="description">Todas las definiciones registradas en la base de datos.</p>
 
         <div class="tool-list">
-          @for (tool of storedTools; track tool.id) {
-          <div class="tool-item" style="cursor: pointer;" (click)="openEditModal(tool)" title="Editar herramienta">
-            <div class="tool-icon" [class.disabled]="!tool.enabled">
-              {{ tool.enabled ? '🟢' : '⚪' }}
+          @for (group of groupedStoredTools; track group.providerName) {
+          <details class="provider-group"
+            style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <summary
+              style="padding: 15px; cursor: pointer; font-weight: 600; font-size: 1.1rem; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2rem;">📁</span>
+                {{ group.providerName }}
+              </div>
+              <span class="badge secondary" style="font-size: 0.8rem;">{{ group.tools.length }} herramientas</span>
+            </summary>
+
+            <div
+              style="padding: 0 15px 15px 15px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;">
+              @for (tool of group.tools; track tool.id) {
+              <div class="tool-item" style="cursor: pointer; margin: 0; background: rgba(0, 0, 0, 0.2);"
+                (click)="openEditModal(tool)" title="Editar herramienta">
+                <div class="tool-icon" [class.disabled]="!tool.enabled">
+                  {{ tool.enabled ? '🟢' : '⚪' }}
+                </div>
+                <div class="tool-content">
+                  <h3>{{ tool.name }}</h3>
+                  <code class="tool-code">{{ tool.code }}</code>
+                  <p>{{ tool.description }}</p>
+                </div>
+                <div class="tool-status" style="display: flex; align-items: center; gap: 10px;">
+                  <span class="status-tag" [class.success]="tool.healthy" [class.error]="!tool.healthy">
+                    {{ tool.healthy ? 'Healthy' : 'Unhealthy' }}
+                  </span>
+                  <button *ngIf="tool.id !== undefined" type="button" class="delete-btn"
+                    (click)="deleteTool(tool.id, tool.name, $event)"
+                    style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0;"
+                    title="Eliminar herramienta">🗑️</button>
+                </div>
+              </div>
+              }
             </div>
-            <div class="tool-content">
-              <h3>{{ tool.name }}</h3>
-              <code class="tool-code">{{ tool.code }}</code>
-              <p>{{ tool.description }}</p>
-            </div>
-            <div class="tool-status" style="display: flex; align-items: center; gap: 10px;">
-              <span class="status-tag" [class.success]="tool.healthy" [class.error]="!tool.healthy">
-                {{ tool.healthy ? 'Healthy' : 'Unhealthy' }}
-              </span>
-              <button *ngIf="tool.id !== undefined" type="button" class="delete-btn"
-                (click)="deleteTool(tool.id, tool.name, $event)"
-                style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0;"
-                title="Eliminar herramienta">🗑️</button>
-            </div>
-          </div>
+          </details>
           } @empty {
           <p class="empty-state">No hay herramientas registradas.</p>
           }
@@ -100,7 +118,7 @@
 
       <form [formGroup]="editForm" (ngSubmit)="saveEditChanges()">
         <div class="form-group">
-          <label for="edit-name">Nombre</label>
+          <label for="edit-name">Nombre <span style="color: #ef4444;">*</span></label>
           <input id="edit-name" type="text" formControlName="name" placeholder="Ej. Servicio de clima" />
           <div *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched" class="error-msg">
             El nombre es requerido.
@@ -113,7 +131,7 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-description">Descripción</label>
+          <label for="edit-description">Descripción <span style="color: #ef4444;">*</span></label>
           <textarea id="edit-description" formControlName="description" rows="3"
             placeholder="Describe qué hace esta herramienta..."></textarea>
           <div *ngIf="editForm.get('description')?.invalid && editForm.get('description')?.touched" class="error-msg">
@@ -122,7 +140,7 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-path">Endpoint Path</label>
+          <label for="edit-path">Endpoint Path <span style="color: #ef4444;">*</span></label>
           <input id="edit-path" type="text" formControlName="endpointPath" placeholder="Ej. /v1/current.json" />
           <div *ngIf="editForm.get('endpointPath')?.invalid && editForm.get('endpointPath')?.touched" class="error-msg">
             El path es requerido.
@@ -130,7 +148,7 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-method">Método HTTP</label>
+          <label for="edit-method">Método HTTP <span style="color: #ef4444;">*</span></label>
           <select id="edit-method" formControlName="httpMethod">
             <option value="GET">GET</option>
             <option value="POST">POST</option>
@@ -170,13 +188,15 @@
               <div class="param-fields"
                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-right: 2rem;">
                 <div class="form-group" style="margin: 0;">
-                  <label style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem;">Nombre</label>
+                  <label style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem;">Nombre <span
+                      style="color: #ef4444;">*</span></label>
                   <input type="text" formControlName="name" placeholder="Ej. q"
                     style="padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.2);">
                 </div>
 
                 <div class="form-group" style="margin: 0;">
-                  <label style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem;">Tipo</label>
+                  <label style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem;">Tipo <span
+                      style="color: #ef4444;">*</span></label>
                   <select formControlName="type"
                     style="padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.2);">
                     <option value="STRING">String</option>
@@ -186,8 +206,8 @@
                 </div>
 
                 <div class="form-group full-width" style="grid-column: 1 / -1; margin: 0;">
-                  <label
-                    style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem;">Descripción</label>
+                  <label style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem;">Descripción
+                    <span style="color: #ef4444;">*</span></label>
                   <input type="text" formControlName="description" placeholder="Ej. Nombre de la ciudad"
                     style="padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.2);">
                 </div>

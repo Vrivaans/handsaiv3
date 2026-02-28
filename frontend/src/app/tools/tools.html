@@ -59,7 +59,8 @@
                     <!-- Create New Provider -->
                     <ng-container *ngIf="batchForm.get('isCreatingProvider')?.value">
                         <div class="form-group">
-                            <label for="providerName">Nombre del Proveedor (Ej. OpenWeatherMap)</label>
+                            <label for="providerName">Nombre del Proveedor (Ej. OpenWeatherMap) <span
+                                    style="color: #ef4444;">*</span></label>
                             <input id="providerName" type="text" formControlName="providerName"
                                 placeholder="Ej. OpenWeatherMap API" />
                         </div>
@@ -71,7 +72,7 @@
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="baseUrl">URL Base</label>
+                            <label for="baseUrl">URL Base <span style="color: #ef4444;">*</span></label>
                             <input id="baseUrl" type="url" formControlName="baseUrl"
                                 placeholder="Ej. https://api.weatherapi.com" />
                         </div>
@@ -127,7 +128,7 @@
                                             style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
                                             <input type="text" formControlName="key"
                                                 placeholder="Key (ej. X-Custom-Header)" style="flex: 1;">
-                                            <input type="text" formControlName="value" placeholder="Value"
+                                            <input type="password" formControlName="value" placeholder="Value *"
                                                 style="flex: 1;">
                                             <button type="button" class="btn delete-btn"
                                                 (click)="removeCustomHeader(idx)"
@@ -212,8 +213,8 @@
                                                     style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
                                                     <input type="text" formControlName="key"
                                                         placeholder="Key (ej. client_id)" style="flex: 1;">
-                                                    <input type="text" formControlName="value"
-                                                        placeholder="Value (ej. 12345)" style="flex: 1;">
+                                                    <input type="password" formControlName="value"
+                                                        placeholder="Value (ej. 12345) *" style="flex: 1;">
                                                     <button type="button" class="btn delete-btn"
                                                         (click)="removeDynamicAuthPayload(idx)"
                                                         style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
@@ -276,7 +277,7 @@
 
                             <div class="endpoint-body">
                                 <div class="form-group">
-                                    <label>Nombre de la herramienta</label>
+                                    <label>Nombre de la herramienta <span style="color: #ef4444;">*</span></label>
                                     <input type="text" formControlName="name" placeholder="Ej. Obtener Clima Actual">
                                 </div>
                                 <div class="form-group">
@@ -284,7 +285,7 @@
                                     <input type="text" formControlName="code" placeholder="Ej. get-weather-current">
                                 </div>
                                 <div class="form-group full-width">
-                                    <label>Descripción detallada</label>
+                                    <label>Descripción detallada <span style="color: #ef4444;">*</span></label>
                                     <textarea formControlName="description" rows="2"
                                         placeholder="Describe para qué sirve..."></textarea>
                                 </div>
@@ -361,7 +362,7 @@
 
             <form [formGroup]="editProviderForm" (ngSubmit)="saveProviderChanges()">
                 <div class="form-group">
-                    <label for="editProviderName">Nombre del Proveedor</label>
+                    <label for="editProviderName">Nombre del Proveedor <span style="color: #ef4444;">*</span></label>
                     <input id="editProviderName" type="text" formControlName="name" placeholder="Ej. Stripe API" />
                 </div>
 
@@ -371,7 +372,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="editBaseUrl">URL Base</label>
+                    <label for="editBaseUrl">URL Base <span style="color: #ef4444;">*</span></label>
                     <input id="editBaseUrl" type="url" formControlName="baseUrl"
                         placeholder="Ej. https://api.stripe.com" />
                 </div>
@@ -429,7 +430,8 @@
                                     style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
                                     <input type="text" formControlName="key" placeholder="Key (ej. X-Custom-Header)"
                                         style="flex: 1;">
-                                    <input type="text" formControlName="value" placeholder="Value" style="flex: 1;">
+                                    <input type="password" formControlName="value" placeholder="Value *"
+                                        style="flex: 1;">
                                     <button type="button" class="btn delete-btn" (click)="removeEditCustomHeader(idx)"
                                         style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>
                                 </div>
@@ -509,8 +511,8 @@
                                             style="display: flex; gap: 10px; margin-bottom: 0.5rem; align-items: center;">
                                             <input type="text" formControlName="key" placeholder="Key (ej. client_id)"
                                                 style="flex: 1;">
-                                            <input type="text" formControlName="value" placeholder="Value (ej. 12345)"
-                                                style="flex: 1;">
+                                            <input type="password" formControlName="value"
+                                                placeholder="Value (ej. 12345) *" style="flex: 1;">
                                             <button type="button" class="btn delete-btn"
                                                 (click)="removeEditDynamicAuthPayload(idx)"
                                                 style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">🗑️</button>

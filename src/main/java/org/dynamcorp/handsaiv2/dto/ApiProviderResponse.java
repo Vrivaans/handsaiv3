@@ -40,8 +40,22 @@ public record ApiProviderResponse(
                 headers = objectMapper.readValue(provider.getCustomHeadersJson(),
                         new TypeReference<Map<String, String>>() {
                         });
+                headers.replaceAll((k, v) -> (v != null && !v.isBlank()) ? "generic_text" : v);
             } catch (Exception e) {
                 // Return empty map on parse error
+            }
+        }
+
+        String obscuredDynamicAuthPayload = provider.getDynamicAuthPayload();
+        if (obscuredDynamicAuthPayload != null && !obscuredDynamicAuthPayload.isBlank()) {
+            try {
+                Map<String, String> payloadMap = objectMapper.readValue(obscuredDynamicAuthPayload,
+                        new TypeReference<Map<String, String>>() {
+                        });
+                payloadMap.replaceAll((k, v) -> (v != null && !v.isBlank()) ? "generic_text" : v);
+                obscuredDynamicAuthPayload = objectMapper.writeValueAsString(payloadMap);
+            } catch (Exception e) {
+                // Ignore parse errors here, let the raw string be returned if not valid JSON
             }
         }
 
@@ -58,7 +72,7 @@ public record ApiProviderResponse(
                 provider.isDynamicAuth(),
                 provider.getDynamicAuthUrl(),
                 provider.getDynamicAuthMethod(),
-                provider.getDynamicAuthPayload(),
+                obscuredDynamicAuthPayload,
                 provider.getDynamicAuthPayloadType(),
                 provider.getDynamicAuthPayloadLocation(),
                 provider.getDynamicAuthTokenExtractionPath(),

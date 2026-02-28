@@ -15,6 +15,7 @@ export class HomeComponent implements OnInit {
     private fb = inject(FormBuilder);
 
     storedTools: ApiTool[] = [];
+    groupedStoredTools: { providerName: string, providerId?: number, tools: ApiTool[] }[] = [];
     activeTools: McpTool[] = [];
 
     error: string | null = null;
@@ -74,7 +75,10 @@ export class HomeComponent implements OnInit {
 
     loadData() {
         this.apiService.getStoredTools().subscribe({
-            next: (tools) => this.storedTools = tools,
+            next: (tools) => {
+                this.storedTools = tools;
+                this.updateGroupedTools();
+            },
             error: (err) => console.error('Error fetching stored tools', err)
         });
 
@@ -90,6 +94,19 @@ export class HomeComponent implements OnInit {
             }
         });
     }
+
+    private updateGroupedTools() {
+        const map = new Map<string, { providerName: string, providerId?: number, tools: ApiTool[] }>();
+        this.storedTools.forEach(tool => {
+            const pName = tool.providerName || 'Proveedores Nativos/Sin Especificar';
+            if (!map.has(pName)) {
+                map.set(pName, { providerName: pName, providerId: tool.providerId, tools: [] });
+            }
+            map.get(pName)!.tools.push(tool);
+        });
+        this.groupedStoredTools = Array.from(map.values());
+    }
+
 
     deleteTool(id: number, name: string, event: Event) {
         event.preventDefault();

@@ -7,11 +7,13 @@ export interface ApiTool {
     name: string;
     code: string;
     description: string;
-    baseUrl: string;
+    providerId?: number;
+    providerName?: string;
+    baseUrl?: string;
     endpointPath: string;
     httpMethod: string;
-    authenticationType: string;
-    apiKeyLocation: string;
+    authenticationType?: string;
+    apiKeyLocation?: string;
     apiKeyName?: string;
     apiKeyValue?: string;
     enabled: boolean;
