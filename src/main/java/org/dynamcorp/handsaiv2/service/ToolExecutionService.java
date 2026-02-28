@@ -34,12 +34,18 @@ public class ToolExecutionService {
     private final EncryptionService encryptionService;
     private final org.dynamcorp.handsaiv2.util.LogObfuscator logObfuscator;
     private final DynamicTokenManager dynamicTokenManager;
+    private final MemoryService memoryService;
 
     public ToolExecuteResponse executeApiTool(ToolExecuteRequest request) {
         log.info("Executing tool: {}", request.toolName());
         Instant startTime = Instant.now();
         ToolExecutionLog executionLog = new ToolExecutionLog();
         executionLog.setSessionId(request.sessionId());
+
+        // --- Native Memory Tools Interceptor ---
+        if (request.toolName().startsWith("handsai_")) {
+            return handleNativeMemoryTool(request, startTime, executionLog);
+        }
 
         try {
             // Intentar obtener la herramienta del caché primero
@@ -397,5 +403,111 @@ public class ToolExecutionService {
         if (provider.getApiKeyValue() != null)
             return encryptionService.decrypt(provider.getApiKeyValue());
         return null;
+    }
+
+    private ToolExecuteResponse handleNativeMemoryTool(ToolExecuteRequest request, java.time.Instant startTime,
+            ToolExecutionLog executionLog) {
+        log.info("Intercepted native memory tool execution: {}", request.toolName());
+        try {
+            java.util.Map<String, Object> params = request.parameters();
+            Object resObj = null;
+
+            switch (request.toolName()) {
+                case "handsai_save_intent":
+                    resObj = memoryService.saveIntent(
+                            getStringParam(params, "agent_id"),
+                            getStringParam(params, "session_id"),
+                            getStringParam(params, "intent"),
+                            getStringParam(params, "verified"),
+                            getDoubleParam(params, "confidence"),
+                            getStringParam(params, "boundary_hit"),
+                            getStringParam(params, "tags"));
+                    break;
+                case "handsai_get_intent":
+                    resObj = memoryService.getActiveIntents(
+                            getStringParam(params, "agent_id"),
+                            getStringParam(params, "tags"));
+                    break;
+                case "handsai_complete_intent":
+                    resObj = memoryService.completeIntent(getLongParam(params, "id")).orElse(null);
+                    break;
+                case "handsai_delete_intent":
+                    memoryService.deleteIntent(getLongParam(params, "id"));
+                    resObj = "Intent deleted successfully";
+                    break;
+                case "handsai_save_knowledge":
+                    resObj = memoryService.saveKnowledge(
+                            getStringParam(params, "title"),
+                            org.dynamcorp.handsaiv2.model.KnowledgeCategoryEnum
+                                    .valueOf(getStringParam(params, "category").toUpperCase()),
+                            getStringParam(params, "content_what"),
+                            getStringParam(params, "content_why"),
+                            getStringParam(params, "content_where"),
+                            getStringParam(params, "content_learned"));
+                    break;
+                case "handsai_search_knowledge":
+                    resObj = memoryService.searchKnowledge(
+                            getStringParam(params, "query"),
+                            getStringParam(params, "category"));
+                    break;
+                case "handsai_delete_knowledge":
+                    memoryService.deleteKnowledge(getLongParam(params, "id"));
+                    resObj = "Knowledge deleted successfully";
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown native tool: " + request.toolName());
+            }
+
+            Object result = objectMapper.writeValueAsString(resObj);
+
+            long executionTime = java.time.Duration.between(startTime, java.time.Instant.now()).toMillis();
+
+            // Build pseudo log for analytics
+            executionLog.setSuccess(true);
+            executionLog.setExecutionTimeMs(executionTime);
+            executionLog.setRequestPayload(objectMapper.writeValueAsString(params));
+            executionLog.setResponsePayload(objectMapper.writeValueAsString(result));
+            executionLog.setExecutedAt(java.time.Instant.now());
+            logBatchProcessor.enqueueLog(executionLog);
+
+            return new ToolExecuteResponse(true, result, executionTime, "system_tool", null);
+
+        } catch (Exception e) {
+            log.error("Error executing native memory tool {}", request.toolName(), e);
+            long executionTime = java.time.Duration.between(startTime, java.time.Instant.now()).toMillis();
+
+            executionLog.setSuccess(false);
+            executionLog.setErrorMessage(e.getMessage());
+            executionLog.setExecutionTimeMs(executionTime);
+            executionLog.setExecutedAt(java.time.Instant.now());
+            logBatchProcessor.enqueueLog(executionLog);
+
+            return new ToolExecuteResponse(false, null, executionTime, "system_tool", e.getMessage());
+        }
+    }
+
+    private String getStringParam(java.util.Map<String, Object> params, String key) {
+        Object val = params.get(key);
+        return val != null ? val.toString() : null;
+    }
+
+    private Double getDoubleParam(java.util.Map<String, Object> params, String key) {
+        Object val = params.get(key);
+        if (val instanceof Number)
+            return ((Number) val).doubleValue();
+        if (val instanceof String)
+            return Double.parseDouble((String) val);
+        return 0.0;
+    }
+
+    private Long getLongParam(java.util.Map<String, Object> params, String key) {
+        Object val = params.get(key);
+        if (val instanceof Number)
+            return ((Number) val).longValue();
+        if (val instanceof String)
+            return Long.parseLong((String) val);
+        if (val == null)
+            throw new IllegalArgumentException("Missing required numeric parameter: " + key);
+        return 0L;
     }
 }

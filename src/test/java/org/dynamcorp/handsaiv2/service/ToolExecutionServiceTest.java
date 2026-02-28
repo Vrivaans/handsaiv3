@@ -25,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import org.dynamcorp.handsaiv2.service.MemoryService;
+
 @ExtendWith(MockitoExtension.class)
 public class ToolExecutionServiceTest {
 
@@ -37,6 +39,8 @@ public class ToolExecutionServiceTest {
     @Mock
     private LogBatchProcessor logBatchProcessor;
     @Mock
+    private RestClient.Builder restClientBuilder; // Changed from local variable to mock field
+    @Mock
     private ObjectMapper objectMapper;
     @Mock
     private EncryptionService encryptionService;
@@ -44,6 +48,8 @@ public class ToolExecutionServiceTest {
     private org.dynamcorp.handsaiv2.util.LogObfuscator logObfuscator;
     @Mock
     private DynamicTokenManager dynamicTokenManager;
+    @Mock
+    private MemoryService memoryService; // New mock field
 
     private ToolExecutionService service;
     private ApiTool tool;
@@ -54,20 +60,21 @@ public class ToolExecutionServiceTest {
         RestTemplate restTemplate = new RestTemplate();
         mockServer = MockRestServiceServer.createServer(restTemplate);
 
-        RestClient.Builder mockBuilder = mock(RestClient.Builder.class);
+        // Use the mocked restClientBuilder
         RestClient restClient = RestClient.create(restTemplate);
-        when(mockBuilder.baseUrl(anyString())).thenReturn(mockBuilder);
-        when(mockBuilder.build()).thenReturn(restClient);
+        when(restClientBuilder.baseUrl(anyString())).thenReturn(restClientBuilder);
+        when(restClientBuilder.build()).thenReturn(restClient);
 
         service = new ToolExecutionService(
                 apiToolService,
                 toolCacheManager,
                 logBatchProcessor,
-                mockBuilder,
+                restClientBuilder,
                 objectMapper,
                 encryptionService,
                 logObfuscator,
-                dynamicTokenManager);
+                dynamicTokenManager,
+                memoryService);
 
         provider = new ApiProvider();
         provider.setId(10L);
