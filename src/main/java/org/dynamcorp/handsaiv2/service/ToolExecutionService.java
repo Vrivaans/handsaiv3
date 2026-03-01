@@ -18,6 +18,7 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -368,7 +369,46 @@ public class ToolExecutionService {
             }
         }
 
+        // Deserializar parámetros de tipo ARRAY: el LLM puede mandarlos como string
+        // JSON (ej: "[\"linkedin\"]") — los convertimos a List<Object> real.
+        resolveArrayParams(apiTool, bodyParams);
+
         return bodyParams;
+    }
+
+    /**
+     * Para cada parámetro definido como ARRAY en la tool, si el valor recibido es
+     * un
+     * String que representa un JSON array, lo deserializa a List&lt;Object&gt;.
+     * Si ya es una List (el LLM lo envió nativo), lo deja intacto.
+     */
+    private void resolveArrayParams(ApiTool apiTool, Map<String, Object> bodyParams) {
+        if (apiTool.getParameters() == null)
+            return;
+        for (ToolParameter param : apiTool.getParameters()) {
+            if (param.getType() != org.dynamcorp.handsaiv2.model.ParameterType.ARRAY)
+                continue;
+            Object value = bodyParams.get(param.getName());
+            if (value == null)
+                continue;
+            if (value instanceof List)
+                continue; // ya es lista nativa, no tocar
+            if (value instanceof String) {
+                String strVal = ((String) value).trim();
+                if (strVal.startsWith("[")) {
+                    try {
+                        List<Object> parsed = objectMapper.readValue(strVal,
+                                new TypeReference<List<Object>>() {
+                                });
+                        bodyParams.put(param.getName(), parsed);
+                        log.debug("Deserialized ARRAY param '{}' from String to List", param.getName());
+                    } catch (Exception e) {
+                        log.warn("Could not deserialize ARRAY param '{}' value '{}': {}",
+                                param.getName(), strVal, e.getMessage());
+                    }
+                }
+            }
+        }
     }
 
     private boolean isResultInvalid(Object result, ApiProvider provider) {
