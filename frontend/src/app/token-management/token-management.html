@@ -1,0 +1,90 @@
+<div class="content-header">
+    <div class="header-left">
+        <h1>Access Token</h1>
+        <p class="subtitle">Manage the Personal Access Token (PAT) used by the MCP bridge.</p>
+    </div>
+    <div class="header-right">
+        <button class="btn btn-secondary" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout Admin
+        </button>
+    </div>
+</div>
+
+<div class="management-container mt-4">
+
+    <div class="error-box" *ngIf="error">
+        {{ error }}
+    </div>
+
+    <div class="card" *ngIf="tokenStatus && !loading">
+        <div class="card-body">
+
+            <div class="status-grid">
+                <div class="status-item">
+                    <label>Status</label>
+                    <span class="badge" [class.success]="tokenStatus.exists" [class.danger]="!tokenStatus.exists">
+                        {{ tokenStatus.exists ? 'Active' : 'Not Configured' }}
+                    </span>
+                </div>
+
+                <div class="status-item">
+                    <label>Token Fingerprint</label>
+                    <code class="fingerprint">{{ tokenStatus.maskedToken || 'N/A' }}</code>
+                </div>
+
+                <div class="status-item">
+                    <label>Created At</label>
+                    <span>{{ tokenStatus.createdAt ? (tokenStatus.createdAt | date:'medium') : 'N/A' }}</span>
+                </div>
+
+                <div class="status-item">
+                    <label>Last Used</label>
+                    <span>{{ tokenStatus.lastUsedAt ? (tokenStatus.lastUsedAt | date:'medium') : 'Never' }}</span>
+                </div>
+            </div>
+
+            <div class="actions mt-4">
+                <button class="btn btn-danger" (click)="confirmRegenerate()" *ngIf="!showConfirm && !rawToken">
+                    <i class="fas fa-sync-alt"></i> Regenerate Token
+                </button>
+            </div>
+
+            <!-- Confirmation Dialog -->
+            <div class="confirm-box mt-3" *ngIf="showConfirm">
+                <h4>Are you sure?</h4>
+                <p>Regenerating the token will immediately invalidate the current one. ANY MCP bridge currently using it
+                    will start failing with 401 Unauthorized.</p>
+                <div class="confirm-actions">
+                    <button class="btn btn-secondary" (click)="cancelRegenerate()">Cancel</button>
+                    <button class="btn btn-danger ml-2" (click)="doRegenerate()">Yes, Regenerate</button>
+                </div>
+            </div>
+
+            <!-- New Token Display (Shown only once) -->
+            <div class="new-token-box mt-4" *ngIf="rawToken">
+                <div class="header success">
+                    <h4>Token Regenerated Successfully 🎉</h4>
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Warning:</strong> {{ warning }}
+                </div>
+
+                <div class="token-display">
+                    <label>New Personal Access Token (PAT)</label>
+                    <div class="token-input-group">
+                        <input type="text" readonly [value]="rawToken">
+                        <button class="btn btn-primary" (click)="copyToken()">
+                            {{ copied ? 'Copied!' : 'Copy' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+        <i class="fas fa-spinner fa-spin"></i> Loading status...
+    </div>
+</div>
