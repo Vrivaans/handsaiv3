@@ -301,8 +301,9 @@ Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Anti
 
 ## 🛣️ Roadmap
 
-- [x] **Autenticación Dinámica (OAuth / Token refresh)** — soporte para herramientas que requieren obtener un token antes de ejecutarlas
-- [x] **Parámetros de tipo ARRAY** — arrays JSON nativos enviados correctamente a APIs externas
+- [x] **Autenticación Dinámica (Token Exchange)** — login automático antes de ejecutar herramientas, con caché y reintento al expirar
+- [x] **Parámetros de tipo ARRAY** — arrays JSON nativos soportados end-to-end
+- [ ] **OAuth2 completo (Authorization Code Flow)** — redirect URI, authorization code, refresh tokens
 - [ ] Más casos de uso y conectores preconstruidos
 - [ ] Interfaces multi-idioma (EN/ES)
 
