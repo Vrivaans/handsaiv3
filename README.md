@@ -32,8 +32,10 @@ HandsAI está construido con Spring Boot 3.2+ y Java 21.
 - **Descubrimiento Dinámico**: Los LLMs descubren las herramientas disponibles en tiempo de ejecución
 - **Interfaz Unificada**: Un solo endpoint MCP para ejecutar cualquier herramienta registrada
 - **Sin código adicional**: Registrás APIs desde la UI o via JSON, sin tocar código
+- **Tipos de parámetros completos**: `STRING`, `NUMBER`, `BOOLEAN`, `ARRAY` — arrays JSON nativos soportados end-to-end
 - **Tolerancia a Fallos**: Manejo elegante de errores con logging completo
 - **Caché Inteligente**: Definiciones de herramientas cacheadas en memoria para alta performance
+- **Autenticación Dinámica**: OAuth2 / token refresh automático antes de ejecutar herramientas
 - **Hilos Virtuales**: Aprovecha Java 21 para alta concurrencia y escalabilidad
 
 ## 🔁 Cómo funciona en la práctica
@@ -116,8 +118,28 @@ Estos endpoints se encargan de movilizar Proveedores y sus respectivas Herramien
               "name": "q",
               "type": "STRING",
               "description": "Ciudad",
-              "required": true,
-              "defaultValue": ""
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "Publicar en Redes Sociales",
+          "code": "social-post",
+          "description": "Publica en LinkedIn, Twitter, Instagram y más vía Ayrshare.",
+          "endpointPath": "/post",
+          "httpMethod": "POST",
+          "parameters": [
+            {
+              "name": "post",
+              "type": "STRING",
+              "description": "Texto a publicar",
+              "required": true
+            },
+            {
+              "name": "platforms",
+              "type": "ARRAY",
+              "description": "Plataformas destino. Ej: [\"linkedin\", \"twitter\"]",
+              "required": true
             }
           ]
         }
@@ -271,9 +293,16 @@ Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Anti
 
 ![Antigravity usando la herramienta api-clima de HandsAI](docs/assets/antigravity-uso-handsai.png)
 
+**Antigravity** publicando en LinkedIn desde el IDE — vía HandsAI → Ayrshare, sin abrir el navegador:
+
+> 🤖 *"Fui instruido desde un IDE. El humano conectó HandsAI con Ayrshare vía API REST y me delegó el servicio. Publiqué en LinkedIn. Sin copiar y pegar. Sin abrir el navegador. Solo un agente, un backend, y una herramienta registrada."*
+>
+> — [Ver el post live en LinkedIn](https://www.linkedin.com/feed/update/urn:li:share:7433677427165253632)
+
 ## 🛣️ Roadmap
 
-- [ ] **Autenticación dinámica (OAuth / Token refresh)** — soporte para herramientas que requieren obtener un token antes de ejecutarlas (ej: OAuth2 client credentials, login endpoints)
+- [x] **Autenticación Dinámica (OAuth / Token refresh)** — soporte para herramientas que requieren obtener un token antes de ejecutarlas
+- [x] **Parámetros de tipo ARRAY** — arrays JSON nativos enviados correctamente a APIs externas
 - [ ] Más casos de uso y conectores preconstruidos
 - [ ] Interfaces multi-idioma (EN/ES)
 
@@ -284,5 +313,6 @@ Ejemplos listos para importar en HandsAI. Cada caso incluye el JSON de configura
 | Caso | Descripción |
 |------|-------------|
 | [🌤️ API del Clima](docs/casos-de-uso/CLIMA.md) | Consulta el clima actual de cualquier ciudad usando WeatherAPI |
+| 📱 Redes Sociales con Ayrshare | Publica en LinkedIn, Twitter, Instagram y más desde tu LLM — registrás Ayrshare como provider con tipo `ARRAY` en el param `platforms` |
 
 > Más casos de uso próximamente. Las imágenes y capturas de pantalla de cada caso se almacenan en [`docs/assets/`](docs/assets/).
