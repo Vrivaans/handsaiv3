@@ -25,6 +25,11 @@ export class HomeComponent implements OnInit {
     toolToDelete: number | null = null;
     toolToDeleteName: string = '';
 
+    // Delete Provider Modal State
+    showDeleteProviderModal = false;
+    providerToDelete: number | null = null;
+    providerToDeleteName: string = '';
+
     // Edit Modal State
     showEditModal = false;
     toolToEdit: ApiTool | null = null;
@@ -130,6 +135,33 @@ export class HomeComponent implements OnInit {
                     this.closeDeleteModal();
                 },
                 error: (err) => console.error('Error deleting tool', err)
+            });
+        }
+    }
+
+    deleteProvider(id: number | undefined, name: string, event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (id === undefined) return;
+        this.providerToDelete = id;
+        this.providerToDeleteName = name;
+        this.showDeleteProviderModal = true;
+    }
+
+    closeDeleteProviderModal() {
+        this.showDeleteProviderModal = false;
+        this.providerToDelete = null;
+        this.providerToDeleteName = '';
+    }
+
+    confirmDeleteProvider() {
+        if (this.providerToDelete !== null) {
+            this.apiService.deleteApiProvider(this.providerToDelete).subscribe({
+                next: () => {
+                    this.loadData();
+                    this.closeDeleteProviderModal();
+                },
+                error: (err) => console.error('Error deleting provider', err)
             });
         }
     }

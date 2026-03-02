@@ -131,6 +131,11 @@ export class ApiService {
         return this.http.delete<void>(`/admin/tools/api/${id}`);
     }
 
+    // Eliminar proveedor en BD (Admin API)
+    deleteApiProvider(id: number): Observable<void> {
+        return this.http.delete<void>(`/admin/providers/${id}`);
+    }
+
     // Analytics endpoints
     getAnalyticsSummary(days: number = 30): Observable<AnalyticsSummary> {
         return this.http.get<AnalyticsSummary>(`/admin/analytics/summary?days=${days}`);
