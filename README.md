@@ -56,14 +56,15 @@ Sin reinicios. Sin redeploys. Las herramientas están disponibles de forma inmed
 - **Framework**: Spring Boot 3.5.4 (Spring MVC)
 - **Java**: Java 21 LTS con Virtual Threads habilitados
 - **Base de Datos**: SQLite (Zero configuration) con Spring Data JPA
+- **Compilación AOT**: Soporte nativo de **GraalVM** para tiempos de arranque en milisegundos (< 1.5s) y bajo consumo de memoria.
 - **Seguridad**: Spring Security con API Keys
 - **Build**: Maven
-- **Adicionales**: Lombok, Spring DevTools
 
 ## 📋 Requisitos Previos
 
 - Java 21 LTS
 - Maven 3.8+
+- *Opcional*: GraalVM 21 (para compilación de imagen nativa)
 
 ## ⚡ Configuración y Arranque
 
@@ -72,10 +73,17 @@ Sin reinicios. Sin redeploys. Las herramientas están disponibles de forma inmed
 2.  **Base de Datos automática**
     HandsAI v3 utiliza **SQLite** por defecto. No necesitas instalar ni levantar ningún servicio de base de datos adicional. Al iniciar, la aplicación creará automáticamente un archivo `handsai.db` en la raíz del proyecto configurado para soportar concurrencia intensiva (WAL Mode y Batch Processing).
 
-3.  **Construir y ejecutar la aplicación**
+3.  **Ejecución clásica (JVM)**
     Puedes ejecutar la aplicación usando el wrapper de Maven:
     ```bash
     ./mvnw spring-boot:run
+    ```
+
+4.  **Ejecución Nativa (GraalVM)**
+    Para un rendimiento óptimo de agente local (arranque instantáneo), compila a código de máquina nativo:
+    ```bash
+    ./mvnw -Pnative native:compile
+    ./target/hands-ai-v2
     ```
     El servicio estará disponible en `http://localhost:8080`.
 
