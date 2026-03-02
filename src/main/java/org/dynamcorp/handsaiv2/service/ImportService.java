@@ -70,6 +70,7 @@ public class ImportService {
         provider.setName(req.name());
         provider.setBaseUrl(req.baseUrl());
         provider.setAuthenticationType(req.authenticationType());
+        provider.setApiKeyLocation(req.apiKeyLocation());
         provider.setApiKeyName(req.apiKeyName());
         provider.setExportable(true); // Since it was exported/imported
 

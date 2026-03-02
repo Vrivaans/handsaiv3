@@ -242,6 +242,14 @@ public class ToolDiscoveryService {
                                                                                                 "description",
                                                                                                 "Nuevo estado: PENDING, IN_PROGRESS, COMPLETED")),
                                                                 "required",
-                                                                List.of("id", "status"))));
+                                                                List.of("id", "status"))),
+                                new ToolDefinition(
+                                                "handsai_refresh_tool_cache",
+                                                "Recarga la caché de herramientas y proveedores en el backend de Java. Usar si hay cambios manuales en la DB o fallos de sincronización.",
+                                                "system_tool",
+                                                java.util.Map.of(
+                                                                "type", "object",
+                                                                "properties", java.util.Map.of(),
+                                                                "required", List.of())));
         }
 }

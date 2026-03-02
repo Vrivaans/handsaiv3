@@ -512,6 +512,10 @@ public class ToolExecutionService {
                             getLongParam(params, "id"),
                             getStringParam(params, "status")).orElse(null);
                     break;
+                case "handsai_refresh_tool_cache":
+                    toolCacheManager.refreshCache();
+                    resObj = "Tool cache updated successfully.";
+                    break;
                 default:
                     throw new IllegalArgumentException("Unknown native tool: " + request.toolName());
             }
