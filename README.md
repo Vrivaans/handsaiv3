@@ -311,6 +311,8 @@ Funciona con cualquier cliente MCP. Así lo detectan **Claude Desktop** y **Anti
 
 - [x] **Autenticación Dinámica (Token Exchange)** — login automático antes de ejecutar herramientas, con caché y reintento al expirar
 - [x] **Parámetros de tipo ARRAY** — arrays JSON nativos soportados end-to-end
+- [x] **Body Payload Template** — soporte para estructuras de body anidadas en APIs que requieren un formato específico (ej. Jules API con `sourceContext`), con interpolación de parámetros via `{{param}}`
+- [x] **Jules Agent API** — integración con [Jules de Google](https://jules.google/docs/api/reference/) para delegar tareas de código a un agente IA autónomo que crea PRs automáticamente
 - [ ] **OAuth2 completo (Authorization Code Flow)** — redirect URI, authorization code, refresh tokens
 - [ ] Más casos de uso y conectores preconstruidos
 - [ ] Interfaces multi-idioma (EN/ES)
@@ -323,5 +325,9 @@ Ejemplos listos para importar en HandsAI. Cada caso incluye el JSON de configura
 |------|-------------|
 | [🌤️ API del Clima](docs/casos-de-uso/CLIMA.md) | Consulta el clima actual de cualquier ciudad usando WeatherAPI |
 | 📱 Redes Sociales con Ayrshare | Publica en LinkedIn, Twitter, Instagram y más desde tu LLM — registrás Ayrshare como provider con tipo `ARRAY` en el param `platforms` |
+| 🤖 Jules Agent API | Delegale tareas de código a Jules (Google): crea sesiones, monitoreá el progreso y aprobá planes — Jules abre PRs automáticamente. Importá la config desde [`NUEVOS_HITOS.json`](docs/casos-de-uso/NUEVOS_HITOS.json) (requiere API Key de [jules.google.com/settings](https://jules.google.com/settings)). |
+| 📧 Resend Email | Enviá emails transaccionales desde tu LLM usando la API de Resend |
+| 🔍 Tavily Search | Búsquedas de IA potenciadas por Tavily con respuestas y fuentes precisas |
+| 🐙 GitHub REST API | Creá issues y listá Pull Requests directamente desde tu LLM |
 
-> Más casos de uso próximamente. Las imágenes y capturas de pantalla de cada caso se almacenan en [`docs/assets/`](docs/assets/).
+> Los JSONs de configuración listos para importar están en [`docs/casos-de-uso/NUEVOS_HITOS.json`](docs/casos-de-uso/NUEVOS_HITOS.json). Las imágenes y capturas de pantalla se almacenan en [`docs/assets/`](docs/assets/).

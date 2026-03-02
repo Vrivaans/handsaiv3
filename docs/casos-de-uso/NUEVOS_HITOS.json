@@ -234,10 +234,10 @@
     {
         "name": "Jules Agent API",
         "code": "google-jules-api",
-        "baseUrl": "https://jules-prod.uc.r.appspot.com",
+        "baseUrl": "https://jules.googleapis.com",
         "authenticationType": "API_KEY",
         "apiKeyLocation": "HEADER",
-        "apiKeyName": "x-api-key",
+        "apiKeyName": "x-goog-api-key",
         "apiKeyValue": "<YOUR_JULES_API_KEY>",
         "isDynamicAuth": false,
         "customHeaders": {
@@ -248,7 +248,7 @@
                 "name": "List Jules Sources",
                 "code": "jules-list-sources",
                 "description": "Lists available sources (like GitHub repositories) connected to Jules.",
-                "endpointPath": "/api/v1/sources",
+                "endpointPath": "/v1alpha/sources",
                 "httpMethod": "GET",
                 "enabled": true,
                 "isExportable": true,
@@ -258,10 +258,11 @@
                 "name": "Create Jules Session",
                 "code": "jules-create-session",
                 "description": "Creates a new Jules session for a specific source.",
-                "endpointPath": "/api/v1/sessions",
+                "endpointPath": "/v1alpha/sessions",
                 "httpMethod": "POST",
                 "enabled": true,
                 "isExportable": true,
+                "bodyPayloadTemplate": "{\"prompt\": \"{{prompt}}\", \"sourceContext\": {\"source\": \"{{source}}\", \"githubRepoContext\": {\"startingBranch\": \"{{startingBranch}}\"}}, \"automationMode\": \"{{automationMode}}\"}",
                 "parameters": [
                     {
                         "name": "prompt",
@@ -273,7 +274,7 @@
                     {
                         "name": "source",
                         "type": "STRING",
-                        "description": "The name of the source (e.g., 'sources/github/owner/repo').",
+                        "description": "The name of the source (format: 'sources/github/owner/repo', use jules-list-sources to get the list).",
                         "required": true,
                         "defaultValue": ""
                     },
@@ -283,6 +284,13 @@
                         "description": "Optional integration mode, e.g., 'AUTO_CREATE_PR'",
                         "required": false,
                         "defaultValue": ""
+                    },
+                    {
+                        "name": "startingBranch",
+                        "type": "STRING",
+                        "description": "The branch to start the Jules session from.",
+                        "required": false,
+                        "defaultValue": "main"
                     }
                 ]
             },
@@ -290,7 +298,7 @@
                 "name": "Send Jules Message",
                 "code": "jules-send-message",
                 "description": "Sends a message to an active Jules session.",
-                "endpointPath": "/api/v1/sessions/{session_id}:streamMessage",
+                "endpointPath": "/v1alpha/sessions/{session_id}:sendMessage",
                 "httpMethod": "POST",
                 "enabled": true,
                 "isExportable": true,
@@ -315,7 +323,7 @@
                 "name": "List Jules Sessions",
                 "code": "jules-list-sessions",
                 "description": "Lists recent Jules sessions.",
-                "endpointPath": "/api/v1/sessions",
+                "endpointPath": "/v1alpha/sessions",
                 "httpMethod": "GET",
                 "enabled": true,
                 "isExportable": true,
@@ -333,7 +341,7 @@
                 "name": "Approve Jules Plan",
                 "code": "jules-approve-plan",
                 "description": "Approves the latest plan in a session that requires explicit approval.",
-                "endpointPath": "/api/v1/sessions/{session_id}:approvePlan",
+                "endpointPath": "/v1alpha/sessions/{session_id}:approvePlan",
                 "httpMethod": "POST",
                 "enabled": true,
                 "isExportable": true,
