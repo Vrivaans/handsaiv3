@@ -1,0 +1,38 @@
+<div class="login-container">
+    <div class="login-card">
+        <div class="header">
+            <h2>Admin Login</h2>
+            <p>Log in to manage your HandsAI API tokens.</p>
+        </div>
+
+        <div class="error-box" *ngIf="error">
+            {{ error }}
+            <div *ngIf="attemptsRemaining >= 0 && !locked" class="attempts-warning">
+                Attempts remaining: {{ attemptsRemaining }}
+            </div>
+            <div *ngIf="locked && retryAfter" class="lockout-warning">
+                Try again after {{ retryAfter }}
+            </div>
+        </div>
+
+        <form (ngSubmit)="onSubmit()">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" [(ngModel)]="username" name="username" required [disabled]="locked">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" [(ngModel)]="password" name="password" required [disabled]="locked">
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="loading || locked">
+                {{ loading ? 'Loging in...' : 'Login' }}
+            </button>
+        </form>
+
+        <div class="actions mt-3 text-center">
+            <a routerLink="/home" class="link">Return to Dashboard</a>
+        </div>
+    </div>
+</div>

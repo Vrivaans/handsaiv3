@@ -1,0 +1,211 @@
+// Shared styles for Auth views
+.setup-container,
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 100px);
+    padding: 2rem;
+    background-color: var(--sidebar-bg);
+}
+
+.setup-card,
+.login-card,
+.token-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+    .header {
+        text-align: center;
+        margin-bottom: 2rem;
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-color);
+            font-size: 1.5rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        &.success {
+            h2 {
+                color: #2ecc71;
+            }
+        }
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+
+            &:focus {
+                outline: none;
+                border-color: var(--accent-primary);
+            }
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.error-box {
+    background: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid #e74c3c;
+    color: #e74c3c;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+
+    .attempts-warning,
+    .lockout-warning {
+        margin-top: 0.5rem;
+        font-weight: 600;
+    }
+}
+
+.warning-box {
+    background: rgba(243, 156, 18, 0.1);
+    border-left: 4px solid #f39c12;
+    color: #f39c12;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.token-display {
+    margin-top: 1.5rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        font-weight: 600;
+    }
+
+    .token-input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--accent-primary);
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-copy {
+            padding: 0 1.5rem;
+            background: var(--surface-2);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+
+            &:hover {
+                background: var(--surface-hover);
+            }
+        }
+    }
+
+    small {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+
+        code {
+            background: var(--bg-color);
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: var(--text-color);
+        }
+    }
+}
+
+.link {
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
