@@ -59,6 +59,7 @@ public class ApiToolServiceImpl implements ApiToolService {
                 .provider(provider)
                 .endpointPath(request.endpointPath())
                 .httpMethod(request.httpMethod())
+                .bodyPayloadTemplate(request.bodyPayloadTemplate())
                 .enabled(request.enabled() != null ? request.enabled() : true)
                 .healthy(request.enabled() != null ? request.enabled() : true) // Initially set to enabled status if
                                                                                // requested
@@ -138,6 +139,8 @@ public class ApiToolServiceImpl implements ApiToolService {
             apiTool.setDescription(request.description());
         if (request.endpointPath() != null)
             apiTool.setEndpointPath(request.endpointPath());
+        if (request.bodyPayloadTemplate() != null)
+            apiTool.setBodyPayloadTemplate(request.bodyPayloadTemplate());
         if (request.httpMethod() != null)
             apiTool.setHttpMethod(request.httpMethod());
 

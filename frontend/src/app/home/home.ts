@@ -49,6 +49,7 @@ export class HomeComponent implements OnInit {
             description: ['', Validators.required],
             endpointPath: ['', Validators.required],
             httpMethod: ['GET', Validators.required],
+            bodyPayloadTemplate: [''],
             enabled: [true],
             isExportable: [false],
             parameters: this.fb.array([])
@@ -190,6 +191,7 @@ export class HomeComponent implements OnInit {
             description: tool.description,
             endpointPath: tool.endpointPath,
             httpMethod: tool.httpMethod,
+            bodyPayloadTemplate: tool.bodyPayloadTemplate || '',
             enabled: tool.enabled,
             isExportable: tool.isExportable || false
         });

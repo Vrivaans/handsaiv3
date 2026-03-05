@@ -19,6 +19,7 @@ public record CreateApiToolRequest(
                 Long providerId,
                 String endpointPath,
                 HttpMethodEnum httpMethod,
+                String bodyPayloadTemplate,
                 List<ToolParameterRequest> parameters,
                 Boolean isExportable) {
 }

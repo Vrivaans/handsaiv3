@@ -94,6 +94,7 @@ public class ExportService {
                 tool.getCode(),
                 tool.getDescription(),
                 tool.getEndpointPath(),
+                tool.getBodyPayloadTemplate(),
                 tool.getHttpMethod(),
                 exportParams);
     }

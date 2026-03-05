@@ -8,6 +8,7 @@ public record ExportApiToolDto(
                 String code,
                 String description,
                 String endpointPath,
+                String bodyPayloadTemplate,
                 HttpMethodEnum httpMethod,
                 List<ExportToolParameterDto> parameters) {
 }

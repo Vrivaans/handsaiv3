@@ -191,12 +191,50 @@ public class ToolExecutionService {
                     .body(Object.class);
         } else {
             Map<String, Object> bodyParameters = prepareBodyParameters(apiTool, finalParameters, dynamicToken);
-            return requestSpec
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(bodyParameters)
-                    .retrieve()
-                    .body(Object.class);
+            String customTemplate = apiTool.getBodyPayloadTemplate();
+
+            if (customTemplate != null && !customTemplate.isBlank()) {
+                String interpolatedBody = interpolateTemplate(customTemplate, bodyParameters);
+                log.debug("Using interpolated body payload template: {}", interpolatedBody);
+                return requestSpec
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(interpolatedBody)
+                        .retrieve()
+                        .body(Object.class);
+            } else {
+                return requestSpec
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(bodyParameters)
+                        .retrieve()
+                        .body(Object.class);
+            }
         }
+    }
+
+    private String interpolateTemplate(String template, Map<String, Object> params) {
+        String result = template;
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            String placeholder = "{{" + entry.getKey() + "}}";
+            if (result.contains(placeholder)) {
+                String replacement = "";
+                if (entry.getValue() != null) {
+                    try {
+                        if (entry.getValue() instanceof String) {
+                            replacement = String.valueOf(entry.getValue());
+                            // Escape characters for valid JSON
+                            replacement = replacement.replace("\\", "\\\\").replace("\"", "\\\"");
+                        } else {
+                            replacement = objectMapper.writeValueAsString(entry.getValue());
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to serialize parameter {} for interpolation", entry.getKey(), e);
+                        replacement = String.valueOf(entry.getValue());
+                    }
+                }
+                result = result.replace(placeholder, replacement);
+            }
+        }
+        return result;
     }
 
     private HttpMethod convertHttpMethod(HttpMethodEnum methodEnum) {

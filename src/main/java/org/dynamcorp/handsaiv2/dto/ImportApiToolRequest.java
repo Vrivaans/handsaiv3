@@ -9,6 +9,7 @@ public record ImportApiToolRequest(
         String code,
         String description,
         String endpointPath,
+        String bodyPayloadTemplate,
         HttpMethodEnum httpMethod,
         List<ImportToolParameterRequest> parameters) {
 }

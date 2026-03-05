@@ -38,6 +38,9 @@ public class ApiTool extends BaseModel {
     @lombok.Builder.Default
     private Set<ToolParameter> parameters = new LinkedHashSet<>();
 
+    @Column(name = "body_payload_template", columnDefinition = "TEXT")
+    private String bodyPayloadTemplate;
+
     @Column(columnDefinition = "boolean default false")
     @lombok.Builder.Default
     private boolean isExportable = false;

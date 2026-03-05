@@ -12,6 +12,7 @@ export interface ApiTool {
     baseUrl?: string;
     endpointPath: string;
     httpMethod: string;
+    bodyPayloadTemplate?: string;
     authenticationType?: string;
     apiKeyLocation?: string;
     apiKeyName?: string;

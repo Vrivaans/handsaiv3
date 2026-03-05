@@ -13,6 +13,7 @@ public record UpdateApiToolRequest(
         Long providerId,
         String endpointPath,
         HttpMethodEnum httpMethod,
+        String bodyPayloadTemplate,
         boolean enabled,
         List<ToolParameterRequest> parameters,
         Boolean isExportable) {

@@ -28,6 +28,7 @@ public record ApiToolResponse(
         boolean healthy,
         Instant lastHealthCheck,
         boolean isExportable,
+        String bodyPayloadTemplate,
         List<ToolParameterResponse> parameters) {
     public static ApiToolResponse from(ApiTool apiTool) {
         return new ApiToolResponse(
@@ -43,6 +44,7 @@ public record ApiToolResponse(
                 apiTool.isHealthy(),
                 apiTool.getLastHealthCheck(),
                 apiTool.isExportable(),
+                apiTool.getBodyPayloadTemplate(),
                 apiTool.getParameters().stream()
                         .map(ToolParameterResponse::from)
                         .collect(Collectors.toList()));

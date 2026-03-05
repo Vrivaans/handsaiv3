@@ -129,6 +129,7 @@ public class ImportService {
         tool.setName(req.name());
         tool.setDescription(req.description());
         tool.setEndpointPath(req.endpointPath());
+        tool.setBodyPayloadTemplate(req.bodyPayloadTemplate());
         tool.setHttpMethod(req.httpMethod());
         tool.setEnabled(true);
         tool.setHealthy(true);

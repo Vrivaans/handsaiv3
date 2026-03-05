@@ -159,6 +159,19 @@
           </select>
         </div>
 
+        <div class="form-group" style="margin-top: 1rem;"
+          *ngIf="editForm.get('httpMethod')?.value === 'POST' || editForm.get('httpMethod')?.value === 'PUT' || editForm.get('httpMethod')?.value === 'PATCH'">
+          <label for="edit-bodyTemplate">Body Payload Template (Opcional)</label>
+          <textarea id="edit-bodyTemplate" formControlName="bodyPayloadTemplate" rows="4"
+            placeholder='Ejemplo: {&#10;  "sourceContext": {&#10;    "source": "{tu_parametro}"&#10;  }&#10;}'
+            style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.2); color: white; font-family: monospace; resize: vertical;"></textarea>
+          <small style="color: rgba(255,255,255,0.6); display: block; margin-top: 5px;">
+            Usá <code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px;"
+              ngNonBindable>{{nombre_del_parametro}}</code> para inyectar dinámicamente el valor suministrado por el LLM
+            en una estructura JSON compleja. Dejalo vacío para enviar los parámetros como un diccionario JSON plano.
+          </small>
+        </div>
+
         <div class="form-group checkbox-group" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
           <input id="edit-enabled" type="checkbox" formControlName="enabled" />
           <label for="edit-enabled">Habilitar esta herramienta para el agente activo</label>
