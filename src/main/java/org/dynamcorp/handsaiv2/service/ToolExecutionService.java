@@ -36,6 +36,8 @@ public class ToolExecutionService {
     private final org.dynamcorp.handsaiv2.util.LogObfuscator logObfuscator;
     private final DynamicTokenManager dynamicTokenManager;
     private final MemoryService memoryService;
+    private final org.dynamcorp.handsaiv2.util.SecuritySanitizer securitySanitizer;
+    private final org.dynamcorp.handsaiv2.util.DataEgressScrubber dataEgressScrubber;
 
     public ToolExecuteResponse executeApiTool(ToolExecuteRequest request) {
         log.info("Executing tool: {}", request.toolName());
@@ -43,32 +45,38 @@ public class ToolExecutionService {
         ToolExecutionLog executionLog = new ToolExecutionLog();
         executionLog.setSessionId(request.sessionId());
 
+        // Intercept and recursively scrub LLM parameters before ANY tool execution to
+        // prevent Data Egress
+        Map<String, Object> safeParameters = dataEgressScrubber.scrubParameters(request.parameters());
+        ToolExecuteRequest safeRequest = new ToolExecuteRequest(request.toolName(), safeParameters,
+                request.sessionId());
+
         // --- Native Memory Tools Interceptor ---
-        if (request.toolName().startsWith("handsai_")) {
-            return handleNativeMemoryTool(request, startTime, executionLog);
+        if (safeRequest.toolName().startsWith("handsai_")) {
+            return handleNativeMemoryTool(safeRequest, startTime, executionLog);
         }
 
         try {
             // Intentar obtener la herramienta del caché primero
-            ApiTool apiTool = toolCacheManager.getCachedTool(request.toolName())
+            ApiTool apiTool = toolCacheManager.getCachedTool(safeRequest.toolName())
                     .orElseGet(() -> {
                         try {
                             // Si no está en caché, buscar en la base de datos
-                            return apiToolService.getApiToolByCode(request.toolName());
+                            return apiToolService.getApiToolByCode(safeRequest.toolName());
                         } catch (Exception e) {
-                            throw new ResourceNotFoundException("Tool not found: " + request.toolName());
+                            throw new ResourceNotFoundException("Tool not found: " + safeRequest.toolName());
                         }
                     });
 
             // Verificar que la herramienta esté habilitada y saludable
             if (!apiTool.isEnabled() || !apiTool.isHealthy()) {
-                throw new ToolExecutionException("Tool is disabled or unhealthy: " + request.toolName());
+                throw new ToolExecutionException("Tool is disabled or unhealthy: " + safeRequest.toolName());
             }
 
             executionLog.setApiTool(apiTool);
 
-            // Convertir los parámetros a JSON y ofuscar para el log
-            String requestPayload = objectMapper.writeValueAsString(request.parameters());
+            // Convertir los parámetros (ya scrubbeados) a JSON y ofuscar para el log
+            String requestPayload = objectMapper.writeValueAsString(safeRequest.parameters());
             executionLog.setRequestPayload(logObfuscator.obfuscate(requestPayload));
 
             // Ejecutar la llamada a la API externa
@@ -79,7 +87,7 @@ public class ToolExecutionService {
 
             Object result = null;
             try {
-                result = executeApiCall(apiTool, request.parameters(), dynamicToken);
+                result = executeApiCall(apiTool, safeRequest.parameters(), dynamicToken);
                 if (apiTool.getProvider().isDynamicAuth() && isResultInvalid(result, apiTool.getProvider())) {
                     throw new HttpClientErrorException(org.springframework.http.HttpStatus.UNAUTHORIZED,
                             "Invalidated by keyword");
@@ -95,7 +103,7 @@ public class ToolExecutionService {
                             apiTool.getProvider().getId());
                     dynamicTokenManager.invalidateToken(apiTool.getProvider().getId());
                     dynamicToken = dynamicTokenManager.getToken(apiTool.getProvider());
-                    result = executeApiCall(apiTool, request.parameters(), dynamicToken);
+                    result = executeApiCall(apiTool, safeRequest.parameters(), dynamicToken);
                     if (isResultInvalid(result, apiTool.getProvider())) {
                         throw new ToolExecutionException(
                                 "Tool execution failed even after token refresh due to invalidation keywords.");
@@ -118,17 +126,19 @@ public class ToolExecutionService {
             // Encolar el log de ejecución para proceso por lotes
             logBatchProcessor.enqueueLog(executionLog);
 
-            log.info("Tool execution successful: {} in {}ms", request.toolName(), executionTime);
+            log.info("Tool execution successful: {} in {}ms", safeRequest.toolName(), executionTime);
+
+            String sanitizedOutput = securitySanitizer.sanitizeToolResponse(result);
 
             return new ToolExecuteResponse(
                     true,
-                    result,
+                    sanitizedOutput,
                     executionTime,
                     "api_tool",
                     null);
 
         } catch (Exception e) {
-            log.error("Error executing tool {}: {}", request.toolName(), e.getMessage());
+            log.error("Error executing tool {}: {}", safeRequest.toolName(), e.getMessage());
 
             // Registrar el error en el log
             executionLog.setSuccess(false);
@@ -559,6 +569,7 @@ public class ToolExecutionService {
             }
 
             Object result = objectMapper.writeValueAsString(resObj);
+            String sanitizedOutput = securitySanitizer.sanitizeToolResponse(result);
 
             long executionTime = java.time.Duration.between(startTime, java.time.Instant.now()).toMillis();
 
@@ -567,11 +578,11 @@ public class ToolExecutionService {
             executionLog.setSystemToolName(request.toolName());
             executionLog.setExecutionTimeMs(executionTime);
             executionLog.setRequestPayload(objectMapper.writeValueAsString(params));
-            executionLog.setResponsePayload(objectMapper.writeValueAsString(result));
+            executionLog.setResponsePayload(sanitizedOutput);
             executionLog.setExecutedAt(java.time.Instant.now());
             logBatchProcessor.enqueueLog(executionLog);
 
-            return new ToolExecuteResponse(true, result, executionTime, "system_tool", null);
+            return new ToolExecuteResponse(true, sanitizedOutput, executionTime, "system_tool", null);
 
         } catch (Exception e) {
             log.error("Error executing native memory tool {}", request.toolName(), e);

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -24,8 +23,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-
-import org.dynamcorp.handsaiv2.service.MemoryService;
 
 @ExtendWith(MockitoExtension.class)
 public class ToolExecutionServiceTest {
@@ -50,6 +47,10 @@ public class ToolExecutionServiceTest {
     private DynamicTokenManager dynamicTokenManager;
     @Mock
     private MemoryService memoryService; // New mock field
+    @Mock
+    private org.dynamcorp.handsaiv2.util.SecuritySanitizer securitySanitizer;
+    @Mock
+    private org.dynamcorp.handsaiv2.util.DataEgressScrubber dataEgressScrubber;
 
     private ToolExecutionService service;
     private ApiTool tool;
@@ -74,7 +75,9 @@ public class ToolExecutionServiceTest {
                 encryptionService,
                 logObfuscator,
                 dynamicTokenManager,
-                memoryService);
+                memoryService,
+                securitySanitizer,
+                dataEgressScrubber);
 
         provider = new ApiProvider();
         provider.setId(10L);
@@ -109,6 +112,9 @@ public class ToolExecutionServiceTest {
                 .andExpect(MockRestRequestMatchers.header("Authorization", "second-fresh-token"))
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"ok\"}", MediaType.APPLICATION_JSON));
 
+        when(securitySanitizer.sanitizeToolResponse(any()))
+                .thenReturn("<UntrustedExternalContent>\n{\"result\":\"ok\"}\n</UntrustedExternalContent>");
+
         ToolExecuteRequest request = new ToolExecuteRequest("TEST-TOOL", new HashMap<>(), "my-session-id");
         ToolExecuteResponse response = service.executeApiTool(request);
 
@@ -134,6 +140,8 @@ public class ToolExecutionServiceTest {
         // 2nd request 401 AGAIN
         mockServer.expect(MockRestRequestMatchers.requestTo("/data"))
                 .andRespond(MockRestResponseCreators.withStatus(HttpStatus.UNAUTHORIZED));
+
+        when(dataEgressScrubber.scrubParameters(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         ToolExecuteRequest request = new ToolExecuteRequest("TEST-TOOL", new HashMap<>(), "my-session-id");
         ToolExecuteResponse response = service.executeApiTool(request);
