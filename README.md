@@ -251,6 +251,26 @@ Esta API implementa el Model Context Protocol (MCP) para la integración estanda
   }
   ```</llm-patch>
 
+## 🛡️ Seguridad y Autenticación
+
+HandsAI está diseñado con múltiples capas de seguridad para proteger tanto la infraestructura local como a los agentes autónomos (LLMs) que lo utilizan.
+
+### Autenticación de Doble Capa
+1. **Acceso UI (Admin Session)**: La interfaz web requiere creación de un usuario administrador y login con sesión HTTP para gestionar proveedores y configuraciones.
+2. **Acceso Bridge (PAT)**: El puente Go (`handsai-mcp`) se autentica contra el backend de Spring Boot utilizando un **Personal Access Token (PAT)** criptográficamente seguro. Este token se emite desde la UI, se visualiza una única vez y debe inyectarse en el entorno del bridge (ej. vía la variable `HANDSAI_TOKEN`). Protege los endpoints MCP de accesos no autorizados.
+
+### Mitigación de Prompt Injection (Inbound)
+Para evitar que payloads maliciosos provenientes de APIs externas (ej. rastreos web, lectura de comentarios) secuestren las instrucciones de sistema del LLM (Indirect Prompt Injection), HandsAI implementa un `SecuritySanitizer`.
+- **Intercepción**: Todas las respuestas devueltas por las herramientas son interceptadas en el backend.
+- **Redacción**: Comandos y frases clásicas de inyección (ej: "ignore previous", "system prompt:") son neutralizados y reemplazados por `[REDACTED_POTENTIAL_PROMPT_INJECTION]`.
+- **Aislamiento Semántico**: El string resultante se envuelve herméticamente en etiquetas XML `<UntrustedExternalContent> ... </UntrustedExternalContent>`. Esto acota el contexto y le deja claro al LLM que esos datos son externos y no deben interpretarse como instrucciones de sistema.
+
+### Prevención de Exfiltración de Datos (Data Egress)
+Para impedir que un agente comprometido o alucinado filtre secretos del entorno local hacia APIs de terceros, HandsAI cuenta con un `DataEgressScrubber`.
+- **Escaneo Profundo**: Antes de ensamblar y despachar cualquier llamada HTTP a un Proveedor, el scrubber inspecciona recursivamente la totalidad de los argumentos (parámetros, listas, mapas) enviados por el LLM.
+- **Detección de Secretos**: Identifica dinámicamente firmas de seguridad como JWTs, Claves Privadas (RSA/PGP) y Tokens genéricos (Bearer/API Keys).
+- **Censura en Tránsito**: Todo secreto detectado en el payload de salida es bloqueado y sustituido por la constante `[REDACTED_SECRET]`, garantizando que ninguna credencial crítica o token de sesión abandone jamás el ecosistema de HandsAI a través del canal del agente.
+
 ## 🌉 Integración con LLMs (HandsAI Bridge)
 
 Para conectar HandsAI con tu cliente MCP (Claude Desktop, Antigravity, VS Code, etc.) necesitás **HandsAI Bridge**, un binario Go liviano que traduce el protocolo MCP sobre stdio a llamadas HTTP REST hacia HandsAI.
